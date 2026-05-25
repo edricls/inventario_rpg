@@ -23,24 +23,36 @@ def iniciar_sistema():
 
         if opcao == "1":
             # O sistema SÓ vai criar o personagem se o usuário digitar 1
-            nome_input = input("Digite o nome do personagem: ")
-            classe_input = input("Digite a classe: ")
-            nivel_input = int(input("Digite o nível: "))
-            nex_input = int(input("Digite o NEX: "))
-            atributos_input = input("Digite os atributos (ex: força=2, agilidade=1, vigor=2, presença=3, inteligencia=4): ")
-            trilha_input = input("Digite a trilha: ")
-            historia_input = input("Digite a história do personagem: ")
+            try:
+                nome_input = input("Digite o nome do personagem: ")
+                classe_input = input("Digite a classe: ")
+                
+                # Validar se nome e classe não estão vazios
+                if not nome_input.strip() or not classe_input.strip():
+                    console.print("[bold red]Erro: Nome e Classe não podem estar vazios![/bold red]")
+                    continue
+                
+                nivel_input = int(input("Digite o nível: "))
+                nex_input = int(input("Digite o NEX: "))
+                atributos_input = input("Digite os atributos (ex: força=2, agilidade=1, vigor=2, presença=3, inteligencia=4): ")
+                trilha_input = input("Digite a trilha: ")
+                historia_input = input("Digite a história do personagem: ")
 
-            # Cria o molde dinamicamente com o que foi digitado no teclado
-            novo_p = Personagem(nome=nome_input, classe=classe_input, nivel=nivel_input, nex=nex_input, atributos=atributos_input, trilha=trilha_input, historia=historia_input)
+                # Cria o molde dinamicamente com o que foi digitado no teclado
+                novo_p = Personagem(nome=nome_input, classe=classe_input, nivel=nivel_input, nex=nex_input, atributos=atributos_input, trilha=trilha_input, historia=historia_input)
 
-            # Salva no banco
-            db = SessionLocal()
-            db.add(novo_p)
-            db.commit()
-            db.close()
+                # Salva no banco
+                db = SessionLocal()
+                db.add(novo_p)
+                db.commit()
+                db.close()
 
-            console.print(f"[bold green]Sucesso:[/] {nome_input} foi salvo no banco de dados!")
+                console.print(f"[bold green]Sucesso:[/] {nome_input} foi salvo no banco de dados!")
+            
+            except ValueError:
+                console.print("[bold red]Erro: Nível e NEX devem ser números inteiros![/bold red]")
+            except Exception as e:
+                console.print(f"[bold red]Erro ao criar personagem: {str(e)}[/bold red]")
 
         elif opcao == "2":
             # Busca todos os personagens no banco
@@ -79,8 +91,7 @@ def escolher_modo():
     
     escolha = input("Escolha uma opção: ").strip()
     
-    if escolha == "1":
-        
+    if escolha == "1":    
         iniciar_gui()
     elif escolha == "2":
         iniciar_sistema()
