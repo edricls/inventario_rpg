@@ -3,6 +3,7 @@
 from app.database import engine, Base, SessionLocal
 from app.models import Personagem
 from rich.console import Console # Usando a biblioteca Rich que você instalou
+from app.gui import iniciar_gui
 
 console = Console()
 
@@ -26,7 +27,7 @@ def iniciar_sistema():
             classe_input = input("Digite a classe: ")
             nivel_input = int(input("Digite o nível: "))
             nex_input = int(input("Digite o NEX: "))
-            atributos_input = input("Digite os atributos (ex: força=2, destreza=1, vigor=2, presença=3, inteligencia=4): ")
+            atributos_input = input("Digite os atributos (ex: força=2, agilidade=1, vigor=2, presença=3, inteligencia=4): ")
             trilha_input = input("Digite a trilha: ")
             historia_input = input("Digite a história do personagem: ")
 
@@ -70,5 +71,22 @@ def iniciar_sistema():
         else:
             console.print("[bold red]Opção inválida![/]")
 
+def escolher_modo():
+    """Permite ao usuário escolher entre modo terminal ou GUI"""
+    print("\n=== ESCOLHA O MODO DE EXECUÇÃO ===")
+    print("1. Interface Gráfica (Janela)")
+    print("2. Terminal (Modo Texto)")
+    
+    escolha = input("Escolha uma opção: ").strip()
+    
+    if escolha == "1":
+        
+        iniciar_gui()
+    elif escolha == "2":
+        iniciar_sistema()
+    else:
+        print("Opção inválida!")
+        escolher_modo()
+
 if __name__ == "__main__":
-    iniciar_sistema()
+    escolher_modo()
