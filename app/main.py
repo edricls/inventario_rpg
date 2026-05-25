@@ -42,9 +42,26 @@ def iniciar_sistema():
             console.print(f"[bold green]Sucesso:[/] {nome_input} foi salvo no banco de dados!")
 
         elif opcao == "2":
-            # Aqui você faria uma busca (query) no banco para listar quem já existe
-            print("Buscando personagens no banco...")
-            # (Lógica de listagem virá depois)
+            # Busca todos os personagens no banco
+            db = SessionLocal()
+            personagens = db.query(Personagem).all()
+            db.close()
+
+            if not personagens:
+                console.print("[bold yellow]Nenhum personagem encontrado no banco de dados.[/bold yellow]")
+            else:
+                console.print(f"\n[bold cyan]=== {len(personagens)} PERSONAGEM(NS) ENCONTRADO(S) ===[/bold cyan]\n")
+                
+                # Exibe cada personagem com formatação
+                for p in personagens:
+                    console.print(f"[bold green]Nome:[/bold green] {p.nome}")
+                    console.print(f"[bold green]Classe:[/bold green] {p.classe}")
+                    console.print(f"[bold green]Nível:[/bold green] {p.nivel}")
+                    console.print(f"[bold green]NEX:[/bold green] {p.nex}")
+                    console.print(f"[bold green]Trilha:[/bold green] {p.trilha}")
+                    console.print(f"[bold green]Atributos:[/bold green] {p.atributos}")
+                    console.print(f"[bold green]História:[/bold green] {p.historia}")
+                    console.print("[dim]─" * 40 + "[/dim]")
 
         elif opcao == "3":
             print("Saindo do sistema... Até logo!")
