@@ -70,7 +70,7 @@ def iniciar_sistema():
                     console.print(f"[bold green]Nome:[/bold green] {p.nome}")
                     console.print(f"[bold green]Classe:[/bold green] {p.classe}")
                     console.print(f"[bold green]Nível:[/bold green] {p.nivel}")
-                    console.print(f"[bold green]NEX:[/bold green] {p.nex}")
+                    console.print(f"[bold green]NEX:[/bold green] {p.nex}%")
                     console.print(f"[bold green]Trilha:[/bold green] {p.trilha}")
                     console.print(f"[bold green]Atributos:[/bold green] {p.atributos}")
                     console.print(f"[bold green]História:[/bold green] {p.historia}")
