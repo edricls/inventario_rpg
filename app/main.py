@@ -76,6 +76,7 @@ def iniciar_sistema():
                     console.print(f"[bold green]História:[/bold green] {p.historia}")
                     console.print("[dim]─" * 40 + "[/dim]")
 
+    
         elif opcao == "3":
             print("Saindo do sistema... Até logo!")
             break # Quebra o loop 'while True' e encerra o programa
