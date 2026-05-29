@@ -32,28 +32,60 @@ class GerenciadorGUI(ctk.CTk):
             ("Classe", "classe"),
             ("Nível", "nivel"),
             ("NEX", "nex"),
-            ("Atributos", "atributos"),
             ("Trilha", "trilha"),
             ("História", "historia")
         ]
 
         self.entradas = {}
+        row = 0
 
-        for idx, (label, chave) in enumerate(campos):
-            ctk.CTkLabel(self.frame_criar, text=label + ":").grid(row=idx, column=0, sticky="w", padx=10, pady=10)
+        for label, chave in campos:
+            ctk.CTkLabel(self.frame_criar, text=label + ":").grid(row=row, column=0, sticky="w", padx=10, pady=10)
 
             if chave == "historia":
                 entrada = ctk.CTkTextbox(self.frame_criar, width=560, height=140)
+            elif chave == "classe":
+                entrada = ctk.CTkOptionMenu(
+                    self.frame_criar,
+                    values=["Combatente", "Especialista", "Ocultista", "Sobrevivente"],
+                    width=560
+                )
+                entrada.set("Combatente")
             else:
                 entrada = ctk.CTkEntry(self.frame_criar, width=560)
 
-            entrada.grid(row=idx, column=1, sticky="ew", padx=10, pady=10)
+            entrada.grid(row=row, column=1, sticky="ew", padx=10, pady=10)
             self.entradas[chave] = entrada
+
+            if chave == "nex":
+                row += 1
+                atributos_label = ctk.CTkLabel(self.frame_criar, text="Atributos:")
+                atributos_label.grid(row=row, column=0, sticky="nw", padx=10, pady=10)
+
+                atributos_frame = ctk.CTkFrame(self.frame_criar)
+                atributos_frame.grid(row=row, column=1, sticky="ew", padx=10, pady=10)
+
+                atributos = [
+                    ("Força", "forca"),
+                    ("Agilidade", "agilidade"),
+                    ("Intelecto", "intelecto"),
+                    ("Presença", "presenca"),
+                    ("Vigor", "vigor")
+                ]
+
+                for col, (texto, chave_attr) in enumerate(atributos):
+                    ctk.CTkLabel(atributos_frame, text=texto).grid(row=0, column=col, sticky="w", padx=5, pady=(0, 5))
+                    entrada_attr = ctk.CTkEntry(atributos_frame, width=100)
+                    entrada_attr.grid(row=1, column=col, sticky="ew", padx=5, pady=5)
+                    self.entradas[chave_attr] = entrada_attr
+                    atributos_frame.columnconfigure(col, weight=1)
+
+            row += 1
 
         self.frame_criar.columnconfigure(1, weight=1)
 
         ctk.CTkButton(self.frame_criar, text="Salvar Personagem", command=self.salvar_personagem).grid(
-            row=len(campos), column=1, sticky="e", padx=10, pady=20
+            row=row, column=1, sticky="e", padx=10, pady=20
         )
 
     def criar_aba_listar(self):
@@ -87,14 +119,34 @@ class GerenciadorGUI(ctk.CTk):
                 messagebox.showerror("Erro", "Nome e Classe são obrigatórios!")
                 return
 
+            nivel = int(self.entradas["nivel"].get() or 1)
+            nex = int(self.entradas["nex"].get() or 0)
+
+            atributos_campos = [
+                ("Força", "forca"),
+                ("Agilidade", "agilidade"),
+                ("Intelecto", "intelecto"),
+                ("Presença", "presenca"),
+                ("Vigor", "vigor")
+            ]
+            atributos_valores = []
+            for label, chave in atributos_campos:
+                valor_texto = self.entradas[chave].get().strip()
+                if valor_texto == "":
+                    valor_texto = "0"
+                else:
+                    int(valor_texto)
+                atributos_valores.append(f"{label}={valor_texto}")
+            atributos_texto = ", ".join(atributos_valores)
+
             novo_p = Personagem(
                 nome=nome,
                 classe=classe,
-                nivel=int(self.entradas["nivel"].get() or 1),
-                nex=int(self.entradas["nex"].get() or 0),
-                atributos=self.entradas["atributos"].get(),
-                trilha=self.entradas["trilha"].get(),
-                historia=self.entradas["historia"].get("1.0", "end")
+                nivel=nivel,
+                nex=nex,
+                atributos=atributos_texto,
+                trilha=self.entradas["trilha"].get().strip(),
+                historia=self.entradas["historia"].get("1.0", "end").strip()
             )
 
             db = SessionLocal()
@@ -112,7 +164,7 @@ class GerenciadorGUI(ctk.CTk):
             self.atualizar_lista()
 
         except ValueError:
-            messagebox.showerror("Erro", "Nível e NEX devem ser números!")
+            messagebox.showerror("Erro", "Nível, NEX e atributos devem ser números!")
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao salvar: {str(e)}")
 
