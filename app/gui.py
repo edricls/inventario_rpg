@@ -36,6 +36,13 @@ class GerenciadorGUI(ctk.CTk):
             ("História", "historia")
         ]
 
+        self.trilhas_por_classe = {
+            "Combatente": ["Aniquilador", "Guerreiro", "Operações Especiais", "Comandante de Campo", "Tropa de Choque"],
+            "Especialista": ["Infiltrador", "Negociador", "Técnico", "Atirador de Elite", "Médico de Campo"],
+            "Ocultista": ["Conduíte", "Flagelador", "Graduado", "Intuitivo", "Lâmina Paranormal"],
+            "Sobrevivente": ["Durão", "Esperto", "Esotérico"]
+        }
+
         self.entradas = {}
         row = 0
 
@@ -48,9 +55,17 @@ class GerenciadorGUI(ctk.CTk):
                 entrada = ctk.CTkOptionMenu(
                     self.frame_criar,
                     values=["Combatente", "Especialista", "Ocultista", "Sobrevivente"],
-                    width=560
+                    width=560,
+                    command=self.atualizar_trilha_opcoes
                 )
                 entrada.set("Combatente")
+            elif chave == "trilha":
+                entrada = ctk.CTkOptionMenu(
+                    self.frame_criar,
+                    values=self.trilhas_por_classe["Combatente"],
+                    width=560
+                )
+                entrada.set(self.trilhas_por_classe["Combatente"][0])
             else:
                 entrada = ctk.CTkEntry(self.frame_criar, width=560)
 
@@ -87,6 +102,15 @@ class GerenciadorGUI(ctk.CTk):
         ctk.CTkButton(self.frame_criar, text="Salvar Personagem", command=self.salvar_personagem).grid(
             row=row, column=1, sticky="e", padx=10, pady=20
         )
+
+    def atualizar_trilha_opcoes(self, classe_selecionada):
+        trilhas = self.trilhas_por_classe.get(classe_selecionada, [])
+        trilha_menu = self.entradas.get("trilha")
+        if trilha_menu is None:
+            return
+        trilha_menu.configure(values=trilhas)
+        if trilhas:
+            trilha_menu.set(trilhas[0])
 
     def criar_aba_listar(self):
         button_frame = ctk.CTkFrame(self.frame_listar)
