@@ -71,6 +71,8 @@ class GerenciadorGUI(ctk.CTk):
 
             if chave == "nivel":
                 entrada.grid(row=row, column=1, sticky="ew", padx=10, pady=(8, 0))
+            elif chave == "nex":
+                entrada.grid(row=row, column=1, sticky="ew", padx=10, pady=(8, 0))
             else:
                 entrada.grid(row=row, column=1, sticky="ew", padx=10, pady=10)
             self.entradas[chave] = entrada
@@ -90,7 +92,18 @@ class GerenciadorGUI(ctk.CTk):
                 row += 1
 
             if chave == "nex":
-                row += 1
+                self.nex_erro_label = ctk.CTkLabel(
+                    self.frame_criar,
+                    text="",
+                    text_color="red",
+                    anchor="w",
+                    height=18,
+                    font=ctk.CTkFont(size=12)
+                )
+                self.nex_erro_label.grid(row=row + 1, column=1, sticky="w", padx=10, pady=(0, 0))
+                entrada.bind("<KeyRelease>", self.validar_nex)
+                entrada.bind("<FocusOut>", self.validar_nex)
+                row += 2
                 atributos_label = ctk.CTkLabel(self.frame_criar, text="Atributos:")
                 atributos_label.grid(row=row, column=0, sticky="nw", padx=10, pady=10)
 
@@ -136,6 +149,24 @@ class GerenciadorGUI(ctk.CTk):
             return False
 
         self.nivel_erro_label.configure(text="")
+        return True
+
+    def validar_nex(self, event=None):
+        nex_texto = self.entradas["nex"].get().strip()
+        if nex_texto == "":
+            self.nex_erro_label.configure(text="")
+            return True
+
+        if not nex_texto.isdigit():
+            self.nex_erro_label.configure(text="O Valor de Nex deve ser entre 0 e 100")
+            return False
+
+        nex = int(nex_texto)
+        if nex < 0 or nex > 100:
+            self.nex_erro_label.configure(text="O Valor de Nex deve ser entre 0 e 100")
+            return False
+
+        self.nex_erro_label.configure(text="")
         return True
 
     def atualizar_trilha_opcoes(self, classe_selecionada):
@@ -187,7 +218,14 @@ class GerenciadorGUI(ctk.CTk):
             else:
                 nivel = int(nivel_texto)
 
-            nex = int(self.entradas["nex"].get() or 0)
+            nex_texto = self.entradas["nex"].get().strip()
+            if nex_texto == "":
+                nex = 0
+            elif not nex_texto.isdigit() or not (0 <= int(nex_texto) <= 100):
+                self.nex_erro_label.configure(text="O Valor de Nex deve ser entre 0 e 100")
+                return
+            else:
+                nex = int(nex_texto)
 
             atributos_campos = [
                 ("Força", "forca"),
@@ -221,13 +259,20 @@ class GerenciadorGUI(ctk.CTk):
             db.commit()
             db.close()
 
-            for entrada in self.entradas.values():
+            for chave, entrada in self.entradas.items():
                 if isinstance(entrada, ctk.CTkTextbox):
                     entrada.delete("1.0", "end")
+                elif isinstance(entrada, ctk.CTkOptionMenu):
+                    if chave == "classe":
+                        entrada.set("Combatente")
+                    elif chave == "trilha":
+                        entrada.set(self.trilhas_por_classe["Combatente"][0])
                 else:
                     entrada.delete(0, "end")
 
             messagebox.showinfo("Sucesso", f"Personagem '{nome}' salvo com sucesso!")
+            self.nivel_erro_label.configure(text="")
+            self.nex_erro_label.configure(text="")
             self.atualizar_lista()
 
         except ValueError:

@@ -86,6 +86,9 @@ def iniciar_sistema():
 
 def escolher_modo():
     """Permite ao usuário escolher entre modo terminal ou GUI"""
+    # Cria as tabelas do banco de dados se não existirem
+    Base.metadata.create_all(bind=engine)
+    
     print("\n=== ESCOLHA O MODO DE EXECUÇÃO ===")
     print("1. Interface Gráfica (Janela)")
     print("2. Terminal (Modo Texto)")
