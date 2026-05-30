@@ -69,8 +69,25 @@ class GerenciadorGUI(ctk.CTk):
             else:
                 entrada = ctk.CTkEntry(self.frame_criar, width=560)
 
-            entrada.grid(row=row, column=1, sticky="ew", padx=10, pady=10)
+            if chave == "nivel":
+                entrada.grid(row=row, column=1, sticky="ew", padx=10, pady=(8, 0))
+            else:
+                entrada.grid(row=row, column=1, sticky="ew", padx=10, pady=10)
             self.entradas[chave] = entrada
+
+            if chave == "nivel":
+                self.nivel_erro_label = ctk.CTkLabel(
+                    self.frame_criar,
+                    text="",
+                    text_color="red",
+                    anchor="w",
+                    height=18,
+                    font=ctk.CTkFont(size=12)
+                )
+                self.nivel_erro_label.grid(row=row + 1, column=1, sticky="w", padx=10, pady=(0, 0))
+                entrada.bind("<KeyRelease>", self.validar_nivel)
+                entrada.bind("<FocusOut>", self.validar_nivel)
+                row += 1
 
             if chave == "nex":
                 row += 1
@@ -102,6 +119,24 @@ class GerenciadorGUI(ctk.CTk):
         ctk.CTkButton(self.frame_criar, text="Salvar Personagem", command=self.salvar_personagem).grid(
             row=row, column=1, sticky="e", padx=10, pady=20
         )
+
+    def validar_nivel(self, event=None):
+        nivel_texto = self.entradas["nivel"].get().strip()
+        if nivel_texto == "":
+            self.nivel_erro_label.configure(text="")
+            return True
+
+        if not nivel_texto.isdigit():
+            self.nivel_erro_label.configure(text="Digite um numero de 0 a 20")
+            return False
+
+        nivel = int(nivel_texto)
+        if nivel < 0 or nivel > 20:
+            self.nivel_erro_label.configure(text="Digite um numero de 0 a 20")
+            return False
+
+        self.nivel_erro_label.configure(text="")
+        return True
 
     def atualizar_trilha_opcoes(self, classe_selecionada):
         trilhas = self.trilhas_por_classe.get(classe_selecionada, [])
@@ -143,7 +178,15 @@ class GerenciadorGUI(ctk.CTk):
                 messagebox.showerror("Erro", "Nome e Classe são obrigatórios!")
                 return
 
-            nivel = int(self.entradas["nivel"].get() or 1)
+            nivel_texto = self.entradas["nivel"].get().strip()
+            if nivel_texto == "":
+                nivel = 1
+            elif not nivel_texto.isdigit() or not (0 <= int(nivel_texto) <= 20):
+                self.nivel_erro_label.configure(text="Digite um numero de 0 a 20")
+                return
+            else:
+                nivel = int(nivel_texto)
+
             nex = int(self.entradas["nex"].get() or 0)
 
             atributos_campos = [
