@@ -104,4 +104,6 @@ def escolher_modo():
         escolher_modo()
 
 if __name__ == "__main__":
-    escolher_modo()
+    # Criar tabelas do banco (se ainda não existirem) e abrir a interface gráfica diretamente
+    Base.metadata.create_all(bind=engine)
+    iniciar_gui()
