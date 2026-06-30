@@ -183,16 +183,6 @@ class GerenciadorGUI(ctk.CTk):
         button_frame.pack(fill="x", padx=10, pady=(10, 0))
 
         ctk.CTkButton(button_frame, text="Atualizar Lista", command=self.atualizar_lista).pack(side="left", padx=(0, 10))
-        ctk.CTkLabel(button_frame, text="ID para remover:").pack(side="left", padx=(0, 5))
-        self.remover_id_entry = ctk.CTkEntry(button_frame, width=120)
-        self.remover_id_entry.pack(side="left", padx=(0, 10))
-        ctk.CTkButton(
-            button_frame,
-            text="Remover Personagem",
-            command=self.remover_personagem,
-            fg_color="#D32F2F",
-            hover_color="#C62828"
-        ).pack(side="left")
 
         self.lista_scroll = ctk.CTkScrollableFrame(self.frame_listar, width=900, height=520)
         self.lista_scroll.pack(fill="both", expand=True, padx=10, pady=10)
@@ -315,6 +305,25 @@ class GerenciadorGUI(ctk.CTk):
         finally:
             db.close()
 
+    def remover_personagem_confirm(self, personagem):
+        confirmar = messagebox.askyesno(
+            "Confirmar remoção",
+            f"Deseja realmente remover o personagem '{personagem.nome}'?"
+        )
+        if not confirmar:
+            return
+
+        db = SessionLocal()
+        try:
+            db.delete(personagem)
+            db.commit()
+            messagebox.showinfo("Removido", f"Personagem '{personagem.nome}' removido com sucesso.")
+            self.atualizar_lista()
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao remover personagem: {str(e)}")
+        finally:
+            db.close()
+
     def abrir_ficha(self, personagem):
         ficha = ctk.CTkToplevel(self)
         ficha.title(f"Ficha de {personagem.nome}")
@@ -402,6 +411,13 @@ class GerenciadorGUI(ctk.CTk):
 
                 footer_row = ctk.CTkFrame(card)
                 footer_row.pack(fill="x", padx=12, pady=(0, 12))
+                ctk.CTkButton(
+                    footer_row,
+                    text="Remover",
+                    command=lambda p=personagem: self.remover_personagem_confirm(p),
+                    fg_color="#D32F2F",
+                    hover_color="#C62828"
+                ).pack(side="right", padx=(0, 10))
                 ctk.CTkButton(footer_row, text="Acessar Ficha", command=lambda p=personagem: self.abrir_ficha(p)).pack(side="right")
 
         except Exception as e:
