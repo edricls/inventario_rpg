@@ -194,9 +194,8 @@ class GerenciadorGUI(ctk.CTk):
             hover_color="#C62828"
         ).pack(side="left")
 
-        self.texto_lista = ctk.CTkTextbox(self.frame_listar, width=900, height=520)
-        self.texto_lista.pack(fill="both", expand=True, padx=10, pady=10)
-        self.texto_lista.configure(state="disabled")
+        self.lista_scroll = ctk.CTkScrollableFrame(self.frame_listar, width=900, height=520)
+        self.lista_scroll.pack(fill="both", expand=True, padx=10, pady=10)
 
         self.atualizar_lista()
 
@@ -316,9 +315,65 @@ class GerenciadorGUI(ctk.CTk):
         finally:
             db.close()
 
+    def abrir_ficha(self, personagem):
+        ficha = ctk.CTkToplevel(self)
+        ficha.title(f"Ficha de {personagem.nome}")
+        ficha.geometry("520x520")
+        ficha.grab_set()
+
+        header_frame = ctk.CTkFrame(ficha)
+        header_frame.pack(fill="x", padx=20, pady=(20, 10))
+
+        photo_frame = ctk.CTkFrame(header_frame, width=140, height=140, corner_radius=20)
+        photo_frame.grid(row=0, column=0, rowspan=2, padx=(0, 15), pady=0)
+        photo_frame.grid_propagate(False)
+        ctk.CTkLabel(photo_frame, text="Foto", font=ctk.CTkFont(size=18, weight="bold")).place(relx=0.5, rely=0.5, anchor="center")
+
+        ctk.CTkLabel(header_frame, text=personagem.nome, font=ctk.CTkFont(size=24, weight="bold")).grid(row=0, column=1, sticky="w")
+        ctk.CTkLabel(header_frame, text=f"Classe: {personagem.classe} | Nível: {personagem.nivel} | NEX: {personagem.nex}%").grid(row=1, column=1, sticky="w")
+
+        info_frame = ctk.CTkFrame(ficha)
+        info_frame.pack(fill="both", expand=True, padx=20, pady=(0, 10))
+        info_frame.grid_columnconfigure(0, weight=0)
+        info_frame.grid_columnconfigure(1, weight=1)
+
+        label_classe = ctk.CTkLabel(info_frame, text="Classe:", anchor="w")
+        valor_classe = ctk.CTkLabel(info_frame, text=personagem.classe, anchor="e")
+        label_classe.grid(row=0, column=0, sticky="w", padx=10, pady=(0, 8))
+        valor_classe.grid(row=0, column=1, sticky="e", padx=10, pady=(0, 8))
+
+        label_nivel = ctk.CTkLabel(info_frame, text="Nível:", anchor="w")
+        valor_nivel = ctk.CTkLabel(info_frame, text=str(personagem.nivel), anchor="e")
+        label_nivel.grid(row=1, column=0, sticky="w", padx=10, pady=(0, 8))
+        valor_nivel.grid(row=1, column=1, sticky="e", padx=10, pady=(0, 8))
+
+        label_nex = ctk.CTkLabel(info_frame, text="NEX:", anchor="w")
+        valor_nex = ctk.CTkLabel(info_frame, text=f"{personagem.nex}%", anchor="e")
+        label_nex.grid(row=2, column=0, sticky="w", padx=10, pady=(0, 8))
+        valor_nex.grid(row=2, column=1, sticky="e", padx=10, pady=(0, 8))
+
+        label_trilha = ctk.CTkLabel(info_frame, text="Trilha:", anchor="w")
+        valor_trilha = ctk.CTkLabel(info_frame, text=personagem.trilha, anchor="e")
+        label_trilha.grid(row=3, column=0, sticky="w", padx=10, pady=(0, 8))
+        valor_trilha.grid(row=3, column=1, sticky="e", padx=10, pady=(0, 8))
+
+        label_atributos = ctk.CTkLabel(info_frame, text="Atributos:", anchor="w")
+        valor_atributos = ctk.CTkLabel(info_frame, text=personagem.atributos, anchor="e", wraplength=320)
+        label_atributos.grid(row=4, column=0, sticky="w", padx=10, pady=(0, 8))
+        valor_atributos.grid(row=4, column=1, sticky="e", padx=10, pady=(0, 8))
+
+        ctk.CTkLabel(info_frame, text="História:", anchor="w").grid(row=5, column=0, columnspan=2, sticky="w", padx=10, pady=(10, 0))
+        historia_text = ctk.CTkTextbox(info_frame, width=460, height=180)
+        historia_text.grid(row=6, column=0, columnspan=2, sticky="nsew", padx=10, pady=(0, 10))
+        info_frame.grid_rowconfigure(6, weight=1)
+        historia_text.insert("1.0", personagem.historia)
+        historia_text.configure(state="disabled")
+
+        ctk.CTkButton(ficha, text="Fechar", command=ficha.destroy).pack(padx=20, pady=(0, 20))
+
     def atualizar_lista(self):
-        self.texto_lista.configure(state="normal")
-        self.texto_lista.delete("1.0", "end")
+        for widget in self.lista_scroll.winfo_children():
+            widget.destroy()
 
         try:
             db = SessionLocal()
@@ -326,29 +381,32 @@ class GerenciadorGUI(ctk.CTk):
             db.close()
 
             if not personagens:
-                self.texto_lista.insert("end", "Nenhum personagem encontrado no banco de dados.")
-            else:
-                texto = f"{'='*80}\n"
-                texto += f"{'PERSONAGENS REGISTRADOS':^80}\n"
-                texto += f"{'='*80}\n\n"
+                empty_label = ctk.CTkLabel(self.lista_scroll, text="Nenhum personagem encontrado no banco de dados.")
+                empty_label.pack(pady=20)
+                return
 
-                for p in personagens:
-                    texto += f"ID: {p.id}\n"
-                    texto += f"Nome: {p.nome}\n"
-                    texto += f"Classe: {p.classe}\n"
-                    texto += f"Nível: {p.nivel}\n"
-                    texto += f"NEX: {p.nex}%\n"
-                    texto += f"Trilha: {p.trilha}\n"
-                    texto += f"Atributos: {p.atributos}\n"
-                    texto += f"História: {p.historia}\n"
-                    texto += f"{'-'*80}\n\n"
+            for personagem in personagens:
+                card = ctk.CTkFrame(self.lista_scroll, fg_color="#2B2B2B", corner_radius=15, border_width=1, border_color="#3A3A3A")
+                card.pack(fill="x", padx=10, pady=8)
 
-                self.texto_lista.insert("end", texto)
+                top_row = ctk.CTkFrame(card)
+                top_row.pack(fill="x", padx=12, pady=12)
+
+                photo_frame = ctk.CTkFrame(top_row, width=120, height=120, corner_radius=16)
+                photo_frame.grid(row=0, column=0, rowspan=2, padx=(0, 12), pady=0)
+                photo_frame.grid_propagate(False)
+                ctk.CTkLabel(photo_frame, text="Foto", font=ctk.CTkFont(size=16, weight="bold")).place(relx=0.5, rely=0.5, anchor="center")
+
+                ctk.CTkLabel(top_row, text=personagem.nome, font=ctk.CTkFont(size=18, weight="bold")).grid(row=0, column=1, sticky="w")
+                ctk.CTkLabel(top_row, text=f"Classe: {personagem.classe} | Nível: {personagem.nivel} | NEX: {personagem.nex}%").grid(row=1, column=1, sticky="w")
+
+                footer_row = ctk.CTkFrame(card)
+                footer_row.pack(fill="x", padx=12, pady=(0, 12))
+                ctk.CTkButton(footer_row, text="Acessar Ficha", command=lambda p=personagem: self.abrir_ficha(p)).pack(side="right")
 
         except Exception as e:
-            self.texto_lista.insert("end", f"Erro ao carregar personagens: {str(e)}")
-
-        self.texto_lista.configure(state="disabled")
+            error_label = ctk.CTkLabel(self.lista_scroll, text=f"Erro ao carregar personagens: {str(e)}", text_color="#FF6B6B")
+            error_label.pack(pady=20)
 
 
 def iniciar_gui():
