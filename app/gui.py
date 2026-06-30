@@ -270,40 +270,9 @@ class GerenciadorGUI(ctk.CTk):
             messagebox.showerror("Erro", f"Erro ao salvar: {str(e)}")
 
     def remover_personagem(self):
-        personagem_id_text = self.remover_id_entry.get().strip()
-        if not personagem_id_text:
-            messagebox.showerror("Erro", "Digite o ID do personagem a remover.")
-            return
-
-        try:
-            personagem_id = int(personagem_id_text)
-        except ValueError:
-            messagebox.showerror("Erro", "O ID deve ser um número inteiro.")
-            return
-
-        db = SessionLocal()
-        try:
-            personagem = db.query(Personagem).filter(Personagem.id == personagem_id).first()
-            if not personagem:
-                messagebox.showerror("Erro", f"Nenhum personagem encontrado com ID {personagem_id}.")
-                return
-
-            confirmar = messagebox.askyesno(
-                "Confirmar remoção",
-                f"Deseja realmente remover o personagem '{personagem.nome}'?"
-            )
-            if not confirmar:
-                return
-
-            db.delete(personagem)
-            db.commit()
-            messagebox.showinfo("Removido", f"Personagem '{personagem.nome}' removido com sucesso.")
-            self.remover_id_entry.delete(0, "end")
-            self.atualizar_lista()
-        except Exception as e:
-            messagebox.showerror("Erro", f"Erro ao remover personagem: {str(e)}")
-        finally:
-            db.close()
+        # método removido: remoção individual agora é feita por
+        # `remover_personagem_confirm(personagem)` em cada card.
+        return
 
     def remover_personagem_confirm(self, personagem):
         confirmar = messagebox.askyesno(
