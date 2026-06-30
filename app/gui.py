@@ -122,6 +122,7 @@ class GerenciadorGUI(ctk.CTk):
                     ctk.CTkLabel(atributos_frame, text=texto).grid(row=0, column=col, sticky="w", padx=5, pady=(0, 5))
                     entrada_attr = ctk.CTkEntry(atributos_frame, width=100)
                     entrada_attr.grid(row=1, column=col, sticky="ew", padx=5, pady=5)
+                    entrada_attr.insert(0, "1")
                     self.entradas[chave_attr] = entrada_attr
                     atributos_frame.columnconfigure(col, weight=1)
 
@@ -227,7 +228,7 @@ class GerenciadorGUI(ctk.CTk):
             for label, chave in atributos_campos:
                 valor_texto = self.entradas[chave].get().strip()
                 if valor_texto == "":
-                    valor_texto = "0"
+                    valor_texto = "1"
                 else:
                     int(valor_texto)
                 atributos_valores.append(f"{label}={valor_texto}")
