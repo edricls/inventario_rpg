@@ -1,5 +1,5 @@
 import customtkinter as ctk
-from tkinter import messagebox
+from tkinter import messagebox, StringVar
 from app.database import SessionLocal
 from app.models import Personagem
 
@@ -356,11 +356,153 @@ class GerenciadorGUI(ctk.CTk):
 
         pericias_frame = ctk.CTkScrollableFrame(tab_pericias)
         pericias_frame.pack(fill="both", expand=True, padx=20, pady=20)
-        ctk.CTkLabel(
-            pericias_frame,
-            text="Nenhuma perícia cadastrada ainda.",
-            anchor="w"
-        ).pack(anchor="w", pady=10)
+
+        headers = ["Pericia", "Treino", "Atributo", "Extra", "Total"]
+        for index, titulo in enumerate(headers):
+            ctk.CTkLabel(pericias_frame, text=titulo, font=ctk.CTkFont(weight="bold")).grid(
+                row=0,
+                column=index,
+                padx=8,
+                pady=(0, 6),
+                sticky="w"
+            )
+
+        pericias = [
+            "Acrobacia",
+            "Adestramento",
+            "Artes",
+            "Atletismo",
+            "Atualiadades",
+            "Ciências",
+            "Crime",
+            "Diplomacia",
+            "Enganação",
+            "Fortitude",
+            "Furtividade",
+            "Iniciativa",
+            "Intimidação",
+            "Intuição",
+            "Investigação",
+            "Luta",
+            "Medicina",
+            "Ocultismo",
+            "Percepção",
+            "Pilotagem",
+            "Pontaria",
+            "Profissão",
+            "Reflexos",
+            "Religião",
+            "Sobrevivência",
+            "Tecnologia",
+            "Tática",
+            "Vontade"
+        ]
+        atributos_pericias = [
+            "AGI",
+            "PRE",
+            "PRE",
+            "FOR",
+            "INT",
+            "INT",
+            "AGI",
+            "PRE",
+            "PRE",
+            "VIG",
+            "AGI",
+            "AGI",
+            "PRE",
+            "PRE",
+            "INT",
+            "FOR",
+            "INT",
+            "INT",
+            "PRE",
+            "AGI",
+            "AGI",
+            "INT",
+            "AGI",
+            "PRE",
+            "INT",
+            "INT",
+            "INT",
+            "PRE"
+        ]
+
+        for row_index, (nome_pericia, atributo_pericia) in enumerate(zip(pericias, atributos_pericias), start=1):
+            ctk.CTkLabel(pericias_frame, text=nome_pericia, anchor="w").grid(
+                row=row_index,
+                column=0,
+                padx=8,
+                pady=2,
+                sticky="w"
+            )
+
+            treino_menu = ctk.CTkOptionMenu(
+                pericias_frame,
+                values=["0", "5", "10", "15"],
+                width=80
+            )
+            treino_menu.set("0")
+            treino_menu.grid(
+                row=row_index,
+                column=1,
+                padx=8,
+                pady=2,
+                sticky="w"
+            )
+
+            ctk.CTkLabel(pericias_frame, text=atributo_pericia, anchor="w").grid(
+                row=row_index,
+                column=2,
+                padx=8,
+                pady=2,
+                sticky="w"
+            )
+
+            extra_var = StringVar(value="0")
+            extra_entry = ctk.CTkEntry(pericias_frame, textvariable=extra_var, width=80)
+            extra_entry.grid(
+                row=row_index,
+                column=3,
+                padx=8,
+                pady=2,
+                sticky="w"
+            )
+
+            total_var = StringVar(value="0")
+            total_label = ctk.CTkLabel(pericias_frame, textvariable=total_var, anchor="w", width=60)
+            total_label.grid(
+                row=row_index,
+                column=4,
+                padx=8,
+                pady=2,
+                sticky="w"
+            )
+
+            def atualizar_total(event=None, treino_widget=treino_menu, extra_widget=extra_var, total_widget=total_var):
+                try:
+                    treino = int(treino_widget.get())
+                except ValueError:
+                    treino = 0
+
+                valor_extra = extra_widget.get().strip()
+                if valor_extra == "":
+                    valor_extra = "0"
+                if not valor_extra.isdigit():
+                    valor_extra = "".join(ch for ch in valor_extra if ch.isdigit()) or "0"
+                    extra_widget.set(valor_extra)
+
+                try:
+                    extra = int(valor_extra)
+                except ValueError:
+                    extra = 0
+
+                total_widget.set(str(treino + extra))
+
+            extra_entry.bind("<KeyRelease>", atualizar_total)
+            extra_entry.bind("<FocusOut>", atualizar_total)
+            treino_menu.configure(command=lambda value=None, total_widget=total_var, extra_widget=extra_var, treino_widget=treino_menu: atualizar_total(None, treino_widget, extra_widget, total_widget))
+            atualizar_total()
 
         ctk.CTkButton(ficha, text="Fechar", command=ficha.destroy).pack(padx=20, pady=(0, 20))
 
