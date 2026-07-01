@@ -297,7 +297,7 @@ class GerenciadorGUI(ctk.CTk):
     def abrir_ficha(self, personagem):
         ficha = ctk.CTkToplevel(self)
         ficha.title(f"Ficha de {personagem.nome}")
-        ficha.geometry("520x520")
+        ficha.geometry("620x620")
         ficha.grab_set()
 
         header_frame = ctk.CTkFrame(ficha)
@@ -311,7 +311,13 @@ class GerenciadorGUI(ctk.CTk):
         ctk.CTkLabel(header_frame, text=personagem.nome, font=ctk.CTkFont(size=24, weight="bold")).grid(row=0, column=1, sticky="w")
         ctk.CTkLabel(header_frame, text=f"Classe: {personagem.classe} | Nível: {personagem.nivel} | NEX: {personagem.nex}%").grid(row=1, column=1, sticky="w")
 
-        info_frame = ctk.CTkFrame(ficha)
+        tabview = ctk.CTkTabview(ficha)
+        tabview.pack(fill="both", expand=True, padx=20, pady=(0, 10))
+
+        tab_dados = tabview.add("Dados Gerais")
+        tab_pericias = tabview.add("Perícias")
+
+        info_frame = ctk.CTkFrame(tab_dados)
         info_frame.pack(fill="both", expand=True, padx=20, pady=(0, 10))
         info_frame.grid_columnconfigure(0, weight=0)
         info_frame.grid_columnconfigure(1, weight=1)
@@ -347,6 +353,14 @@ class GerenciadorGUI(ctk.CTk):
         info_frame.grid_rowconfigure(6, weight=1)
         historia_text.insert("1.0", personagem.historia)
         historia_text.configure(state="disabled")
+
+        pericias_frame = ctk.CTkScrollableFrame(tab_pericias)
+        pericias_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        ctk.CTkLabel(
+            pericias_frame,
+            text="Nenhuma perícia cadastrada ainda.",
+            anchor="w"
+        ).pack(anchor="w", pady=10)
 
         ctk.CTkButton(ficha, text="Fechar", command=ficha.destroy).pack(padx=20, pady=(0, 20))
 
