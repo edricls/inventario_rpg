@@ -1,6 +1,6 @@
 #Este é o arquivo principal, o "ponto de entrada" do seu programa.
 #É o arquivo que você vai executar no terminal usando o comando python -m app.main.
-from app.database import engine, Base, SessionLocal
+from app.database import engine, Base, SessionLocal, ensure_database_schema
 from app.models import Personagem
 from rich.console import Console # Usando a biblioteca Rich que você instalou
 from app.gui import iniciar_gui
@@ -10,7 +10,7 @@ console = Console()
 def iniciar_sistema():
     # Isso roda sempre, mas o SQLAlchemy é inteligente: se as tabelas 
     # já existirem no arquivo .db, ele não faz nada e não apaga seus dados.
-    Base.metadata.create_all(bind=engine)
+    ensure_database_schema()
 
     # LOOP do jogo
     while True:
@@ -105,5 +105,5 @@ def escolher_modo():
 
 if __name__ == "__main__":
     # Criar tabelas do banco (se ainda não existirem) e abrir a interface gráfica diretamente
-    Base.metadata.create_all(bind=engine)
+    ensure_database_schema()
     iniciar_gui()

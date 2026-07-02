@@ -15,6 +15,7 @@ class Personagem(Base):
     atributos = Column(String)  # Atributos do personagem (força, agilidade, etc.) armazenados como string JSON
     trilha = Column(String)  # Trilha do personagem 
     historia = Column(String)  # História do personagem
+    pericias = Column(String, default="[]")  # Dados das perícias do personagem em formato JSON
     
     
 

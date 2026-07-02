@@ -1,7 +1,70 @@
+import json
 import customtkinter as ctk
 from tkinter import messagebox, StringVar
 from app.database import SessionLocal
 from app.models import Personagem
+
+PERICIAS = [
+    "Acrobacia",
+    "Adestramento",
+    "Artes",
+    "Atletismo",
+    "Atualiadades",
+    "Ciências",
+    "Crime",
+    "Diplomacia",
+    "Enganação",
+    "Fortitude",
+    "Furtividade",
+    "Iniciativa",
+    "Intimidação",
+    "Intuição",
+    "Investigação",
+    "Luta",
+    "Medicina",
+    "Ocultismo",
+    "Percepção",
+    "Pilotagem",
+    "Pontaria",
+    "Profissão",
+    "Reflexos",
+    "Religião",
+    "Sobrevivência",
+    "Tecnologia",
+    "Tática",
+    "Vontade"
+]
+
+ATRIBUTOS_PERICIAS = [
+    "AGI",
+    "PRE",
+    "PRE",
+    "FOR",
+    "INT",
+    "INT",
+    "AGI",
+    "PRE",
+    "PRE",
+    "VIG",
+    "AGI",
+    "AGI",
+    "PRE",
+    "PRE",
+    "INT",
+    "FOR",
+    "INT",
+    "INT",
+    "PRE",
+    "AGI",
+    "AGI",
+    "INT",
+    "AGI",
+    "PRE",
+    "INT",
+    "INT",
+    "INT",
+    "PRE"
+]
 
 ctk.set_appearance_mode("System")
 ctk.set_default_color_theme("blue")
@@ -241,7 +304,11 @@ class GerenciadorGUI(ctk.CTk):
                 nex=nex,
                 atributos=atributos_texto,
                 trilha=self.entradas["trilha"].get().strip(),
-                historia=self.entradas["historia"].get("1.0", "end").strip()
+                historia=self.entradas["historia"].get("1.0", "end").strip(),
+                pericias=json.dumps([
+                    {"nome": nome_pericia, "atributo": atributo_pericia, "treino": 0, "extra": 0, "total": 0}
+                    for nome_pericia, atributo_pericia in zip(PERICIAS, ATRIBUTOS_PERICIAS)
+                ])
             )
 
             db = SessionLocal()
@@ -274,6 +341,44 @@ class GerenciadorGUI(ctk.CTk):
         # método removido: remoção individual agora é feita por
         # `remover_personagem_confirm(personagem)` em cada card.
         return
+
+    def _carregar_dados_pericias(self, personagem):
+        if not personagem.pericias:
+            return [
+                {"nome": nome_pericia, "atributo": atributo_pericia, "treino": 0, "extra": 0, "total": 0}
+                for nome_pericia, atributo_pericia in zip(PERICIAS, ATRIBUTOS_PERICIAS)
+            ]
+
+        try:
+            dados = json.loads(personagem.pericias)
+            if isinstance(dados, list):
+                return dados
+        except (TypeError, ValueError):
+            pass
+
+        return [
+            {"nome": nome_pericia, "atributo": atributo_pericia, "treino": 0, "extra": 0, "total": 0}
+            for nome_pericia, atributo_pericia in zip(PERICIAS, ATRIBUTOS_PERICIAS)
+        ]
+
+    def _salvar_pericias_personagem(self, personagem, dados_pericias):
+        try:
+            db = SessionLocal()
+            personagem_db = db.query(Personagem).filter(Personagem.id == personagem.id).first()
+            if personagem_db is None:
+                db.close()
+                return
+
+            dados_json = json.dumps(dados_pericias)
+            personagem_db.pericias = dados_json
+            if hasattr(personagem, "pericias"):
+                personagem.pericias = dados_json
+            db.commit()
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao salvar perícias: {str(e)}")
+        finally:
+            if 'db' in locals():
+                db.close()
 
     def remover_personagem_confirm(self, personagem):
         confirmar = messagebox.askyesno(
@@ -367,68 +472,14 @@ class GerenciadorGUI(ctk.CTk):
                 sticky="w"
             )
 
-        pericias = [
-            "Acrobacia",
-            "Adestramento",
-            "Artes",
-            "Atletismo",
-            "Atualiadades",
-            "Ciências",
-            "Crime",
-            "Diplomacia",
-            "Enganação",
-            "Fortitude",
-            "Furtividade",
-            "Iniciativa",
-            "Intimidação",
-            "Intuição",
-            "Investigação",
-            "Luta",
-            "Medicina",
-            "Ocultismo",
-            "Percepção",
-            "Pilotagem",
-            "Pontaria",
-            "Profissão",
-            "Reflexos",
-            "Religião",
-            "Sobrevivência",
-            "Tecnologia",
-            "Tática",
-            "Vontade"
-        ]
-        atributos_pericias = [
-            "AGI",
-            "PRE",
-            "PRE",
-            "FOR",
-            "INT",
-            "INT",
-            "AGI",
-            "PRE",
-            "PRE",
-            "VIG",
-            "AGI",
-            "AGI",
-            "PRE",
-            "PRE",
-            "INT",
-            "FOR",
-            "INT",
-            "INT",
-            "PRE",
-            "AGI",
-            "AGI",
-            "INT",
-            "AGI",
-            "PRE",
-            "INT",
-            "INT",
-            "INT",
-            "PRE"
-        ]
+        dados_pericias_salvos = self._carregar_dados_pericias(personagem)
+        rows_state = []
 
-        for row_index, (nome_pericia, atributo_pericia) in enumerate(zip(pericias, atributos_pericias), start=1):
+        for row_index, (nome_pericia, atributo_pericia) in enumerate(zip(PERICIAS, ATRIBUTOS_PERICIAS), start=1):
+            dados_pericia = next((item for item in dados_pericias_salvos if item.get("nome") == nome_pericia), None)
+            if dados_pericia is None:
+                dados_pericia = {"nome": nome_pericia, "atributo": atributo_pericia, "treino": 0, "extra": 0, "total": 0}
+
             ctk.CTkLabel(pericias_frame, text=nome_pericia, anchor="w").grid(
                 row=row_index,
                 column=0,
@@ -442,7 +493,7 @@ class GerenciadorGUI(ctk.CTk):
                 values=["0", "5", "10", "15"],
                 width=80
             )
-            treino_menu.set("0")
+            treino_menu.set(str(dados_pericia.get("treino", 0)))
             treino_menu.grid(
                 row=row_index,
                 column=1,
@@ -459,7 +510,7 @@ class GerenciadorGUI(ctk.CTk):
                 sticky="w"
             )
 
-            extra_var = StringVar(value="0")
+            extra_var = StringVar(value=str(dados_pericia.get("extra", 0)))
             extra_entry = ctk.CTkEntry(pericias_frame, textvariable=extra_var, width=80)
             extra_entry.grid(
                 row=row_index,
@@ -469,7 +520,7 @@ class GerenciadorGUI(ctk.CTk):
                 sticky="w"
             )
 
-            total_var = StringVar(value="0")
+            total_var = StringVar(value=str(dados_pericia.get("total", 0)))
             total_label = ctk.CTkLabel(pericias_frame, textvariable=total_var, anchor="w", width=60)
             total_label.grid(
                 row=row_index,
@@ -479,32 +530,59 @@ class GerenciadorGUI(ctk.CTk):
                 sticky="w"
             )
 
-            def atualizar_total(event=None, treino_widget=treino_menu, extra_widget=extra_var, total_widget=total_var):
+            row_state = {
+                "nome": nome_pericia,
+                "atributo": atributo_pericia,
+                "treino_menu": treino_menu,
+                "extra_var": extra_var,
+                "total_var": total_var,
+            }
+            rows_state.append(row_state)
+
+        def atualizar_todas_as_pericias(event=None):
+            dados_para_salvar = []
+            for row_state in rows_state:
                 try:
-                    treino = int(treino_widget.get())
+                    treino = int(row_state["treino_menu"].get())
                 except ValueError:
                     treino = 0
 
-                valor_extra = extra_widget.get().strip()
+                valor_extra = row_state["extra_var"].get().strip()
                 if valor_extra == "":
                     valor_extra = "0"
                 if not valor_extra.isdigit():
                     valor_extra = "".join(ch for ch in valor_extra if ch.isdigit()) or "0"
-                    extra_widget.set(valor_extra)
+                    row_state["extra_var"].set(valor_extra)
 
                 try:
                     extra = int(valor_extra)
                 except ValueError:
                     extra = 0
 
-                total_widget.set(str(treino + extra))
+                total = treino + extra
+                row_state["total_var"].set(str(total))
+                dados_para_salvar.append({
+                    "nome": row_state["nome"],
+                    "atributo": row_state["atributo"],
+                    "treino": treino,
+                    "extra": extra,
+                    "total": total,
+                })
 
-            extra_entry.bind("<KeyRelease>", atualizar_total)
-            extra_entry.bind("<FocusOut>", atualizar_total)
-            treino_menu.configure(command=lambda value=None, total_widget=total_var, extra_widget=extra_var, treino_widget=treino_menu: atualizar_total(None, treino_widget, extra_widget, total_widget))
-            atualizar_total()
+            self._salvar_pericias_personagem(personagem, dados_para_salvar)
 
-        ctk.CTkButton(ficha, text="Fechar", command=ficha.destroy).pack(padx=20, pady=(0, 20))
+        def salvar_e_fechar():
+            atualizar_todas_as_pericias()
+            ficha.destroy()
+
+        for row_state in rows_state:
+            row_state["extra_var"].trace_add("write", lambda *args, state=row_state: atualizar_todas_as_pericias())
+            row_state["treino_menu"].configure(command=lambda value=None: atualizar_todas_as_pericias())
+            row_state["extra_var"].set(row_state["extra_var"].get())
+
+        atualizar_todas_as_pericias()
+
+        ctk.CTkButton(ficha, text="Fechar", command=salvar_e_fechar).pack(padx=20, pady=(0, 20))
 
     def atualizar_lista(self):
         for widget in self.lista_scroll.winfo_children():

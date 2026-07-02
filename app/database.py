@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 # Cria a conexão com o banco de dados SQLite local
@@ -13,6 +13,21 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # A classe Base será herdada por todos os modelos para o SQLAlchemy reconhecê-los
 Base = declarative_base()
 
+
+def ensure_database_schema():
+    """Cria as tabelas e adiciona colunas novas em bancos já existentes."""
+    Base.metadata.create_all(bind=engine)
+
+    inspector = inspect(engine)
+    if "personagens" not in inspector.get_table_names():
+        return
+
+    columns = {column["name"] for column in inspector.get_columns("personagens")}
+    if "pericias" not in columns:
+        with engine.begin() as connection:
+            connection.execute(text("ALTER TABLE personagens ADD COLUMN pericias VARCHAR"))
+
+
 def get_db():
     """Função utilitária para abrir e fechar a sessão do banco com segurança"""
     db = SessionLocal()
@@ -20,5 +35,3 @@ def get_db():
         yield db
     finally:
         db.close()
-
-DATABASE_URL = "sqlite:///rpg.db"
