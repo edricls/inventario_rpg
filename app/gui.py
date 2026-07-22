@@ -90,15 +90,6 @@ class GerenciadorGUI(ctk.CTk):
         self.criar_aba_listar()
 
     def criar_aba_criar(self):
-        campos = [
-            ("Nome", "nome"),
-            ("Classe", "classe"),
-            ("Nível", "nivel"),
-            ("NEX", "nex"),
-            ("Trilha", "trilha"),
-            ("História", "historia")
-        ]
-
         self.trilhas_por_classe = {
             "Combatente": ["Aniquilador", "Guerreiro", "Operações Especiais", "Comandante de Campo", "Tropa de Choque"],
             "Especialista": ["Infiltrador", "Negociador", "Técnico", "Atirador de Elite", "Médico de Campo"],
@@ -109,96 +100,115 @@ class GerenciadorGUI(ctk.CTk):
         self.entradas = {}
         row = 0
 
-        for label, chave in campos:
-            ctk.CTkLabel(self.frame_criar, text=label + ":").grid(row=row, column=0, sticky="w", padx=10, pady=10)
+        ctk.CTkLabel(self.frame_criar, text="Nome:").grid(row=row, column=0, sticky="w", padx=10, pady=10)
+        nome_entrada = ctk.CTkEntry(self.frame_criar, width=560)
+        nome_entrada.grid(row=row, column=1, columnspan=3, sticky="ew", padx=10, pady=10)
+        self.entradas["nome"] = nome_entrada
+        row += 1
 
-            if chave == "historia":
-                entrada = ctk.CTkTextbox(self.frame_criar, width=560, height=140)
-            elif chave == "classe":
-                entrada = ctk.CTkOptionMenu(
-                    self.frame_criar,
-                    values=["Combatente", "Especialista", "Ocultista", "Sobrevivente"],
-                    width=560,
-                    command=self.atualizar_trilha_opcoes
-                )
-                entrada.set("Combatente")
-            elif chave == "trilha":
-                entrada = ctk.CTkOptionMenu(
-                    self.frame_criar,
-                    values=self.trilhas_por_classe["Combatente"],
-                    width=560
-                )
-                entrada.set(self.trilhas_por_classe["Combatente"][0])
-            else:
-                entrada = ctk.CTkEntry(self.frame_criar, width=560)
+        ctk.CTkLabel(self.frame_criar, text="Classe:").grid(row=row, column=0, sticky="w", padx=10, pady=10)
+        classe_entrada = ctk.CTkOptionMenu(
+            self.frame_criar,
+            values=["Combatente", "Especialista", "Ocultista", "Sobrevivente"],
+            width=560,
+            command=self.atualizar_trilha_opcoes
+        )
+        classe_entrada.set("Combatente")
+        classe_entrada.grid(row=row, column=1, columnspan=3, sticky="ew", padx=10, pady=10)
+        self.entradas["classe"] = classe_entrada
+        row += 1
 
-            if chave == "nivel":
-                entrada.grid(row=row, column=1, sticky="ew", padx=10, pady=(8, 0))
-            elif chave == "nex":
-                entrada.grid(row=row, column=1, sticky="ew", padx=10, pady=(8, 0))
-            else:
-                entrada.grid(row=row, column=1, sticky="ew", padx=10, pady=10)
-            self.entradas[chave] = entrada
+        ctk.CTkLabel(self.frame_criar, text="Nível:").grid(row=row, column=0, sticky="w", padx=10, pady=10)
+        nivel_entrada = ctk.CTkEntry(self.frame_criar, width=90)
+        nivel_entrada.grid(row=row, column=1, sticky="w", padx=10, pady=(8, 0))
+        self.entradas["nivel"] = nivel_entrada
 
-            if chave == "nivel":
-                self.nivel_erro_label = ctk.CTkLabel(
-                    self.frame_criar,
-                    text="",
-                    text_color="red",
-                    anchor="w",
-                    height=18,
-                    font=ctk.CTkFont(size=12)
-                )
-                self.nivel_erro_label.grid(row=row + 1, column=1, sticky="w", padx=10, pady=(0, 0))
-                entrada.bind("<KeyRelease>", self.validar_nivel)
-                entrada.bind("<FocusOut>", self.validar_nivel)
-                row += 1
+        ctk.CTkLabel(self.frame_criar, text="NEX:").grid(row=row, column=2, sticky="w", padx=10, pady=10)
+        nex_entrada = ctk.CTkEntry(self.frame_criar, width=90)
+        nex_entrada.grid(row=row, column=3, sticky="w", padx=10, pady=(8, 0))
+        self.entradas["nex"] = nex_entrada
+        row += 1
 
-            if chave == "nex":
-                self.nex_erro_label = ctk.CTkLabel(
-                    self.frame_criar,
-                    text="",
-                    text_color="red",
-                    anchor="w",
-                    height=18,
-                    font=ctk.CTkFont(size=12)
-                )
-                self.nex_erro_label.grid(row=row + 1, column=1, sticky="w", padx=10, pady=(0, 0))
-                entrada.bind("<KeyRelease>", self.validar_nex)
-                entrada.bind("<FocusOut>", self.validar_nex)
-                row += 2
-                atributos_label = ctk.CTkLabel(self.frame_criar, text="Atributos:")
-                atributos_label.grid(row=row, column=0, sticky="nw", padx=10, pady=10)
+        self.nivel_erro_label = ctk.CTkLabel(
+            self.frame_criar,
+            text="",
+            text_color="red",
+            anchor="w",
+            height=18,
+            font=ctk.CTkFont(size=12)
+        )
+        self.nivel_erro_label.grid(row=row, column=1, sticky="w", padx=10, pady=(0, 0))
+        nivel_entrada.bind("<KeyRelease>", self.validar_nivel)
+        nivel_entrada.bind("<FocusOut>", self.validar_nivel)
 
-                atributos_frame = ctk.CTkFrame(self.frame_criar)
-                atributos_frame.grid(row=row, column=1, sticky="ew", padx=10, pady=10)
+        self.nex_erro_label = ctk.CTkLabel(
+            self.frame_criar,
+            text="",
+            text_color="red",
+            anchor="w",
+            height=18,
+            font=ctk.CTkFont(size=12)
+        )
+        self.nex_erro_label.grid(row=row, column=3, sticky="w", padx=10, pady=(0, 0))
+        nex_entrada.bind("<KeyRelease>", self.validar_nex)
+        nex_entrada.bind("<FocusOut>", self.validar_nex)
+        row += 1
 
-                atributos = [
-                    ("Força", "forca"),
-                    ("Agilidade", "agilidade"),
-                    ("Intelecto", "intelecto"),
-                    ("Presença", "presenca"),
-                    ("Vigor", "vigor")
-                ]
+        ctk.CTkLabel(self.frame_criar, text="Trilha:").grid(row=row, column=0, sticky="w", padx=10, pady=10)
+        trilha_entrada = ctk.CTkOptionMenu(
+            self.frame_criar,
+            values=self.trilhas_por_classe["Combatente"],
+            width=560
+        )
+        trilha_entrada.set(self.trilhas_por_classe["Combatente"][0])
+        trilha_entrada.grid(row=row, column=1, columnspan=3, sticky="ew", padx=10, pady=10)
+        self.entradas["trilha"] = trilha_entrada
+        row += 1
 
-                for col, (texto, chave_attr) in enumerate(atributos):
-                    ctk.CTkLabel(atributos_frame, text=texto).grid(row=0, column=col, sticky="w", padx=5, pady=(0, 5))
-                    entrada_attr = ctk.CTkEntry(atributos_frame, width=100)
-                    entrada_attr.grid(row=1, column=col, sticky="ew", padx=5, pady=5)
-                    entrada_attr.insert(0, "1")
-                    self.entradas[chave_attr] = entrada_attr
-                    atributos_frame.columnconfigure(col, weight=1)
+        atributos_label = ctk.CTkLabel(self.frame_criar, text="Atributos:")
+        atributos_label.grid(row=row, column=0, sticky="nw", padx=10, pady=10)
 
-            row += 1
+        atributos_frame = ctk.CTkFrame(self.frame_criar)
+        atributos_frame.grid(row=row, column=1, columnspan=3, sticky="ew", padx=10, pady=10)
+
+        atributos = [
+            ("Força", "forca"),
+            ("Agilidade", "agilidade"),
+            ("Intelecto", "intelecto"),
+            ("Presença", "presenca"),
+            ("Vigor", "vigor")
+        ]
+
+        for col, (texto, chave_attr) in enumerate(atributos):
+            ctk.CTkLabel(atributos_frame, text=texto).grid(row=0, column=col, sticky="w", padx=5, pady=(0, 5))
+            entrada_attr = ctk.CTkEntry(atributos_frame, width=100)
+            entrada_attr.grid(row=1, column=col, sticky="ew", padx=5, pady=5)
+            entrada_attr.insert(0, "1")
+            self.entradas[chave_attr] = entrada_attr
+            atributos_frame.columnconfigure(col, weight=1)
+
+        row += 1
+
+        ctk.CTkLabel(self.frame_criar, text="História:").grid(row=row, column=0, sticky="nw", padx=10, pady=10)
+        historia_entrada = ctk.CTkTextbox(self.frame_criar, width=560, height=140)
+        historia_entrada.grid(row=row, column=1, columnspan=3, sticky="ew", padx=10, pady=10)
+        self.entradas["historia"] = historia_entrada
+        row += 1
 
         self.frame_criar.columnconfigure(1, weight=1)
+        self.frame_criar.columnconfigure(3, weight=1)
 
         ctk.CTkButton(self.frame_criar, text="Salvar Personagem", command=self.salvar_personagem).grid(
-            row=row, column=1, sticky="e", padx=10, pady=20
+            row=row, column=3, sticky="e", padx=10, pady=20
         )
 
     def validar_nivel(self, event=None):
         nivel_texto = self.entradas["nivel"].get().strip()
+        # Limitar a no máximo 2 caracteres para o campo Nível
+        if len(nivel_texto) > 2:
+            nivel_texto = nivel_texto[:2]
+            self.entradas["nivel"].delete(0, "end")
+            self.entradas["nivel"].insert(0, nivel_texto)
         if nivel_texto == "":
             self.nivel_erro_label.configure(text="")
             return True
@@ -217,6 +227,11 @@ class GerenciadorGUI(ctk.CTk):
 
     def validar_nex(self, event=None):
         nex_texto = self.entradas["nex"].get().strip()
+        # Limitar a no máximo 2 caracteres para o campo NEX
+        if len(nex_texto) > 2:
+            nex_texto = nex_texto[:2]
+            self.entradas["nex"].delete(0, "end")
+            self.entradas["nex"].insert(0, nex_texto)
         if nex_texto == "":
             self.nex_erro_label.configure(text="")
             return True
@@ -263,6 +278,11 @@ class GerenciadorGUI(ctk.CTk):
                 return
 
             nivel_texto = self.entradas["nivel"].get().strip()
+            # Garantir que o texto do nível tenha no máximo 2 caracteres
+            if len(nivel_texto) > 2:
+                nivel_texto = nivel_texto[:2]
+                self.entradas["nivel"].delete(0, "end")
+                self.entradas["nivel"].insert(0, nivel_texto)
             if nivel_texto == "":
                 nivel = 1
             elif not nivel_texto.isdigit() or not (0 <= int(nivel_texto) <= 20):
@@ -271,7 +291,12 @@ class GerenciadorGUI(ctk.CTk):
             else:
                 nivel = int(nivel_texto)
 
-            nex_texto = self.entradas["nex"].get().strip()
+                nex_texto = self.entradas["nex"].get().strip()
+                # Garantir que o texto do NEX tenha no máximo 2 caracteres
+                if len(nex_texto) > 2:
+                    nex_texto = nex_texto[:2]
+                    self.entradas["nex"].delete(0, "end")
+                    self.entradas["nex"].insert(0, nex_texto)
             if nex_texto == "":
                 nex = 0
             elif not nex_texto.isdigit() or not (0 <= int(nex_texto) <= 100):
