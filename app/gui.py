@@ -163,6 +163,7 @@ class GerenciadorGUI(ctk.CTk):
         trilha_entrada.set(self.trilhas_por_classe["Combatente"][0])
         trilha_entrada.grid(row=row, column=1, columnspan=3, sticky="ew", padx=10, pady=10)
         self.entradas["trilha"] = trilha_entrada
+        self.atualizar_estado_trilha()
         row += 1
 
         atributos_label = ctk.CTkLabel(self.frame_criar, text="Atributos:")
@@ -211,18 +212,22 @@ class GerenciadorGUI(ctk.CTk):
             self.entradas["nivel"].insert(0, nivel_texto)
         if nivel_texto == "":
             self.nivel_erro_label.configure(text="")
+            self.atualizar_estado_trilha()
             return True
 
         if not nivel_texto.isdigit():
             self.nivel_erro_label.configure(text="Digite um numero de 0 a 20")
+            self.atualizar_estado_trilha()
             return False
 
         nivel = int(nivel_texto)
         if nivel < 0 or nivel > 20:
             self.nivel_erro_label.configure(text="Digite um numero de 0 a 20")
+            self.atualizar_estado_trilha()
             return False
 
         self.nivel_erro_label.configure(text="")
+        self.atualizar_estado_trilha()
         return True
 
     def validar_nex(self, event=None):
@@ -249,13 +254,33 @@ class GerenciadorGUI(ctk.CTk):
         return True
 
     def atualizar_trilha_opcoes(self, classe_selecionada):
-        trilhas = self.trilhas_por_classe.get(classe_selecionada, [])
         trilha_menu = self.entradas.get("trilha")
         if trilha_menu is None:
             return
+
+        nivel_texto = self.entradas["nivel"].get().strip()
+        if nivel_texto.isdigit() and int(nivel_texto) < 2:
+            return
+
+        trilhas = self.trilhas_por_classe.get(classe_selecionada, [])
         trilha_menu.configure(values=trilhas)
         if trilhas:
             trilha_menu.set(trilhas[0])
+
+    def atualizar_estado_trilha(self):
+        trilha_menu = self.entradas.get("trilha")
+        if trilha_menu is None:
+            return
+
+        nivel_texto = self.entradas["nivel"].get().strip()
+        if nivel_texto.isdigit() and int(nivel_texto) < 2:
+            trilha_menu.configure(values=["Nenhuma"], state="disabled")
+            trilha_menu.set("Nenhuma")
+            return
+
+        trilha_menu.configure(state="normal")
+        classe_selecionada = self.entradas["classe"].get().strip()
+        self.atualizar_trilha_opcoes(classe_selecionada)
 
     def criar_aba_listar(self):
         button_frame = ctk.CTkFrame(self.frame_listar)
