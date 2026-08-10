@@ -1,4 +1,4 @@
-import json
+﻿import json
 import customtkinter as ctk
 from tkinter import messagebox, StringVar
 from app.database import SessionLocal
@@ -66,8 +66,100 @@ ATRIBUTOS_PERICIAS = [
     "PRE"
 ]
 
+ORIGENS = [
+    "Acadêmico",
+    "Agente de Saúde",
+    "Amnésico",
+    "Artista",
+    "Atleta",
+    "Chef",
+    "Criminoso",
+    "Cultista Arrependido",
+    "Desgarrado",
+    "Engenheiro",
+    "Executivo",
+    "Investigador",
+    "Lutador",
+    "Magnata",
+    "Mercenário",
+    "Militar",
+    "Operário",
+    "Policial",
+    "Religioso",
+    "Servidor Publico",
+    "Teórico da Cospiração",
+    "T.I",
+    "Trabalhador Rural",
+    "Trambiqueiro",
+    "Universitário",
+    "Vítima"
+]
+
 ctk.set_appearance_mode("System")
 ctk.set_default_color_theme("blue")
+
+class ScrollableOriginOptionMenu(ctk.CTkOptionMenu):
+    def __init__(self, master, values, width=560, height=32, command=None):
+        super().__init__(master, values=values, width=width, height=height, command=command, dynamic_resizing=False)
+        self._dropdown_frame = None
+
+    def _open_dropdown_menu(self):
+        if self._dropdown_frame is not None:
+            self._close_dropdown_menu()
+            return
+
+        root = self.winfo_toplevel()
+        self._dropdown_frame = ctk.CTkFrame(
+            root,
+            corner_radius=8,
+            border_width=1,
+            fg_color=("#2B2B2B", "#1F1F1F"),
+            border_color=("#4A4A4A", "#5A5A5A")
+        )
+
+        x = self.winfo_rootx() - root.winfo_rootx()
+        y = self.winfo_rooty() - root.winfo_rooty() + self.winfo_height() + 4
+        self._dropdown_frame.place(x=x, y=y)
+        self._dropdown_frame.lift()
+
+        scroll_frame = ctk.CTkScrollableFrame(
+            self._dropdown_frame,
+            width=max(self._desired_width, 220),
+            height=180
+        )
+        scroll_frame.pack(fill="both", expand=True, padx=6, pady=6)
+
+        for value in self._values:
+            button = ctk.CTkButton(
+                scroll_frame,
+                text=value,
+                width=max(self._desired_width, 220),
+                height=28,
+                fg_color="transparent",
+                hover_color=("#3A3A3A", "#4A4A4A"),
+                anchor="w",
+                command=lambda v=value: self._select_value(v)
+            )
+            button.pack(fill="x", padx=2, pady=2)
+
+    def _select_value(self, value):
+        self._current_value = value
+        self._text_label.configure(text=value)
+
+        if self._variable is not None:
+            self._variable_callback_blocked = True
+            self._variable.set(self._current_value)
+            self._variable_callback_blocked = False
+
+        if self._command is not None:
+            self._command(self._current_value)
+
+        self._close_dropdown_menu()
+
+    def _close_dropdown_menu(self):
+        if self._dropdown_frame is not None:
+            self._dropdown_frame.destroy()
+            self._dropdown_frame = None
 
 class GerenciadorGUI(ctk.CTk):
     def __init__(self):
@@ -164,6 +256,18 @@ class GerenciadorGUI(ctk.CTk):
         trilha_entrada.grid(row=row, column=1, columnspan=3, sticky="ew", padx=10, pady=10)
         self.entradas["trilha"] = trilha_entrada
         self.atualizar_estado_trilha()
+        row += 1
+
+        ctk.CTkLabel(self.frame_criar, text="Origem:").grid(row=row, column=0, sticky="w", padx=10, pady=10)
+        origem_entrada = ScrollableOriginOptionMenu(
+            self.frame_criar,
+            values=ORIGENS,
+            width=560,
+            height=32
+        )
+        origem_entrada.set(ORIGENS[0])
+        origem_entrada.grid(row=row, column=1, columnspan=3, sticky="ew", padx=10, pady=10)
+        self.entradas["origem"] = origem_entrada
         row += 1
 
         atributos_label = ctk.CTkLabel(self.frame_criar, text="Atributos:")
@@ -354,6 +458,7 @@ class GerenciadorGUI(ctk.CTk):
                 nex=nex,
                 atributos=atributos_texto,
                 trilha=self.entradas["trilha"].get().strip(),
+                origem=self.entradas["origem"].get().strip(),
                 historia=self.entradas["historia"].get("1.0", "end").strip(),
                 pericias=json.dumps([
                     {"nome": nome_pericia, "atributo": atributo_pericia, "treino": 0, "extra": 0, "total": 0}
@@ -374,6 +479,13 @@ class GerenciadorGUI(ctk.CTk):
                         entrada.set("Combatente")
                     elif chave == "trilha":
                         entrada.set(self.trilhas_por_classe["Combatente"][0])
+                elif isinstance(entrada, ctk.CTkOptionMenu):
+                    if chave == "classe":
+                        entrada.set("Combatente")
+                    elif chave == "trilha":
+                        entrada.set(self.trilhas_por_classe["Combatente"][0])
+                    elif chave == "origem":
+                        entrada.set(ORIGENS[0])
                 else:
                     entrada.delete(0, "end")
 
@@ -464,7 +576,8 @@ class GerenciadorGUI(ctk.CTk):
         ctk.CTkLabel(photo_frame, text="Foto", font=ctk.CTkFont(size=18, weight="bold")).place(relx=0.5, rely=0.5, anchor="center")
 
         ctk.CTkLabel(header_frame, text=personagem.nome, font=ctk.CTkFont(size=24, weight="bold")).grid(row=0, column=1, sticky="w")
-        ctk.CTkLabel(header_frame, text=f"Classe: {personagem.classe} | Nível: {personagem.nivel} | NEX: {personagem.nex}%").grid(row=1, column=1, sticky="w")
+        origem_valor = getattr(personagem, "origem", None) or ""
+        ctk.CTkLabel(header_frame, text=f"Classe: {personagem.classe} | Nível: {personagem.nivel} | NEX: {personagem.nex}% | Origem: {origem_valor or 'Não informada'}").grid(row=1, column=1, sticky="w")
 
         tabview = ctk.CTkTabview(ficha)
         tabview.pack(fill="both", expand=True, padx=20, pady=(0, 10))
@@ -497,15 +610,20 @@ class GerenciadorGUI(ctk.CTk):
         label_trilha.grid(row=3, column=0, sticky="w", padx=10, pady=(0, 8))
         valor_trilha.grid(row=3, column=1, sticky="e", padx=10, pady=(0, 8))
 
+        label_origem = ctk.CTkLabel(info_frame, text="Origem:", anchor="w")
+        valor_origem = ctk.CTkLabel(info_frame, text=getattr(personagem, "origem", None) or "Não informada", anchor="e")
+        label_origem.grid(row=4, column=0, sticky="w", padx=10, pady=(0, 8))
+        valor_origem.grid(row=4, column=1, sticky="e", padx=10, pady=(0, 8))
+
         label_atributos = ctk.CTkLabel(info_frame, text="Atributos:", anchor="w")
         valor_atributos = ctk.CTkLabel(info_frame, text=personagem.atributos, anchor="e", wraplength=320)
-        label_atributos.grid(row=4, column=0, sticky="w", padx=10, pady=(0, 8))
-        valor_atributos.grid(row=4, column=1, sticky="e", padx=10, pady=(0, 8))
+        label_atributos.grid(row=5, column=0, sticky="w", padx=10, pady=(0, 8))
+        valor_atributos.grid(row=5, column=1, sticky="e", padx=10, pady=(0, 8))
 
-        ctk.CTkLabel(info_frame, text="História:", anchor="w").grid(row=5, column=0, columnspan=2, sticky="w", padx=10, pady=(10, 0))
+        ctk.CTkLabel(info_frame, text="História:", anchor="w").grid(row=6, column=0, columnspan=2, sticky="w", padx=10, pady=(10, 0))
         historia_text = ctk.CTkTextbox(info_frame, width=460, height=180)
-        historia_text.grid(row=6, column=0, columnspan=2, sticky="nsew", padx=10, pady=(0, 10))
-        info_frame.grid_rowconfigure(6, weight=1)
+        historia_text.grid(row=7, column=0, columnspan=2, sticky="nsew", padx=10, pady=(0, 10))
+        info_frame.grid_rowconfigure(7, weight=1)
         historia_text.insert("1.0", personagem.historia)
         historia_text.configure(state="disabled")
 
@@ -661,7 +779,8 @@ class GerenciadorGUI(ctk.CTk):
                 ctk.CTkLabel(photo_frame, text="Foto", font=ctk.CTkFont(size=16, weight="bold")).place(relx=0.5, rely=0.5, anchor="center")
 
                 ctk.CTkLabel(top_row, text=personagem.nome, font=ctk.CTkFont(size=18, weight="bold")).grid(row=0, column=1, sticky="w")
-                ctk.CTkLabel(top_row, text=f"Classe: {personagem.classe} | Nível: {personagem.nivel} | NEX: {personagem.nex}%").grid(row=1, column=1, sticky="w")
+                origem_valor = getattr(personagem, "origem", None) or ""
+                ctk.CTkLabel(top_row, text=f"Classe: {personagem.classe} | Nível: {personagem.nivel} | NEX: {personagem.nex}% | Origem: {origem_valor or 'Não informada'}").grid(row=1, column=1, sticky="w")
 
                 footer_row = ctk.CTkFrame(card)
                 footer_row.pack(fill="x", padx=12, pady=(0, 12))

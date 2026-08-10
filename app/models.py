@@ -14,6 +14,7 @@ class Personagem(Base):
     nex = Column(Integer)  # NEX do personagem
     atributos = Column(String)  # Atributos do personagem (força, agilidade, etc.) armazenados como string JSON
     trilha = Column(String)  # Trilha do personagem 
+    origem = Column(String, default="")  # Origem do personagem
     historia = Column(String)  # História do personagem
     pericias = Column(String, default="[]")  # Dados das perícias do personagem em formato JSON
     

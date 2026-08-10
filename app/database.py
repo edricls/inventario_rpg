@@ -27,6 +27,10 @@ def ensure_database_schema():
         with engine.begin() as connection:
             connection.execute(text("ALTER TABLE personagens ADD COLUMN pericias VARCHAR"))
 
+    if "origem" not in columns:
+        with engine.begin() as connection:
+            connection.execute(text("ALTER TABLE personagens ADD COLUMN origem VARCHAR"))
+
 
 def get_db():
     """Função utilitária para abrir e fechar a sessão do banco com segurança"""
