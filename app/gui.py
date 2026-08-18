@@ -577,7 +577,11 @@ class GerenciadorGUI(ctk.CTk):
 
         ctk.CTkLabel(header_frame, text=personagem.nome, font=ctk.CTkFont(size=24, weight="bold")).grid(row=0, column=1, sticky="w")
         origem_valor = getattr(personagem, "origem", None) or ""
-        ctk.CTkLabel(header_frame, text=f"Classe: {personagem.classe} | Nível: {personagem.nivel} | NEX: {personagem.nex}% | Origem: {origem_valor or 'Não informada'}").grid(row=1, column=1, sticky="w")
+        resumo_ficha = ctk.CTkLabel(
+            header_frame,
+            text=f"Classe: {personagem.classe} | Nível: {personagem.nivel} | NEX: {personagem.nex}% | Origem: {origem_valor or 'Não informada'}"
+        )
+        resumo_ficha.grid(row=1, column=1, sticky="w")
 
         tabview = ctk.CTkTabview(ficha)
         tabview.pack(fill="both", expand=True, padx=20, pady=(0, 10))
@@ -626,6 +630,110 @@ class GerenciadorGUI(ctk.CTk):
         info_frame.grid_rowconfigure(7, weight=1)
         historia_text.insert("1.0", personagem.historia)
         historia_text.configure(state="disabled")
+
+        tab_edicao = tabview.add("Editar Ficha")
+        edicao_frame = ctk.CTkFrame(tab_edicao)
+        edicao_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        edicao_frame.grid_columnconfigure(1, weight=1)
+
+        ctk.CTkLabel(edicao_frame, text="Nível:", anchor="w").grid(
+            row=0, column=0, sticky="w", padx=10, pady=10
+        )
+        nivel_edicao = ctk.CTkOptionMenu(
+            edicao_frame,
+            values=[str(nivel) for nivel in range(21)],
+            width=100
+        )
+        nivel_edicao.grid(row=0, column=1, sticky="w", padx=10, pady=10)
+        nivel_edicao.set(str(personagem.nivel))
+
+        ctk.CTkLabel(edicao_frame, text="NEX:", anchor="w").grid(
+            row=1, column=0, sticky="w", padx=10, pady=10
+        )
+        nex_edicao = ctk.CTkOptionMenu(
+            edicao_frame,
+            values=[str(nex) for nex in range(101)],
+            width=100
+        )
+        nex_edicao.grid(row=1, column=1, sticky="w", padx=10, pady=10)
+        nex_edicao.set(str(personagem.nex))
+
+        ctk.CTkLabel(edicao_frame, text="Origem:", anchor="w").grid(
+            row=2, column=0, sticky="w", padx=10, pady=10
+        )
+        origem_edicao = ScrollableOriginOptionMenu(edicao_frame, values=ORIGENS, width=460)
+        origem_edicao.grid(row=2, column=1, sticky="ew", padx=10, pady=10)
+        origem_edicao.set(getattr(personagem, "origem", None) or ORIGENS[0])
+
+        ctk.CTkLabel(edicao_frame, text="Atributos:", anchor="w").grid(
+            row=3, column=0, sticky="nw", padx=10, pady=10
+        )
+        atributos_edicao = ctk.CTkEntry(edicao_frame)
+        atributos_edicao.grid(row=3, column=1, sticky="ew", padx=10, pady=10)
+        atributos_edicao.insert(0, personagem.atributos or "")
+
+        ctk.CTkLabel(edicao_frame, text="História:", anchor="w").grid(
+            row=4, column=0, columnspan=2, sticky="w", padx=10, pady=(10, 0)
+        )
+        historia_edicao = ctk.CTkTextbox(edicao_frame, height=260)
+        historia_edicao.grid(row=5, column=0, columnspan=2, sticky="nsew", padx=10, pady=(0, 10))
+        edicao_frame.grid_rowconfigure(5, weight=1)
+        historia_edicao.insert("1.0", personagem.historia or "")
+
+        def salvar_edicao():
+            nivel_texto = nivel_edicao.get().strip()
+            nex_texto = nex_edicao.get().strip()
+            if not nivel_texto.isdigit() or not 0 <= int(nivel_texto) <= 20:
+                messagebox.showerror("Erro", "O nível deve ser um número entre 0 e 20.")
+                return
+            if not nex_texto.isdigit() or not 0 <= int(nex_texto) <= 100:
+                messagebox.showerror("Erro", "O NEX deve ser um número entre 0 e 100.")
+                return
+
+            db = SessionLocal()
+            try:
+                personagem_db = db.query(Personagem).filter(Personagem.id == personagem.id).first()
+                if personagem_db is None:
+                    messagebox.showerror("Erro", "Personagem não encontrado no banco de dados.")
+                    return
+
+                personagem_db.nivel = int(nivel_texto)
+                personagem_db.nex = int(nex_texto)
+                personagem_db.origem = origem_edicao.get().strip()
+                personagem_db.atributos = atributos_edicao.get().strip()
+                personagem_db.historia = historia_edicao.get("1.0", "end").strip()
+                db.commit()
+
+                personagem.nivel = personagem_db.nivel
+                personagem.nex = personagem_db.nex
+                personagem.origem = personagem_db.origem
+                personagem.atributos = personagem_db.atributos
+                personagem.historia = personagem_db.historia
+                resumo_ficha.configure(
+                    text=f"Classe: {personagem.classe} | Nível: {personagem.nivel} | NEX: {personagem.nex}% | Origem: {personagem.origem or 'Não informada'}"
+                )
+                valor_nivel.configure(text=str(personagem.nivel))
+                valor_nex.configure(text=f"{personagem.nex}%")
+                valor_origem.configure(text=personagem.origem or "Não informada")
+                valor_atributos.configure(text=personagem.atributos)
+                historia_text.configure(state="normal")
+                historia_text.delete("1.0", "end")
+                historia_text.insert("1.0", personagem.historia)
+                historia_text.configure(state="disabled")
+                self.atualizar_lista()
+                tabview.set("Dados Gerais")
+                messagebox.showinfo("Sucesso", "Ficha atualizada com sucesso!")
+            except Exception as e:
+                db.rollback()
+                messagebox.showerror("Erro", f"Erro ao atualizar ficha: {str(e)}")
+            finally:
+                db.close()
+
+        ctk.CTkButton(
+            edicao_frame,
+            text="Salvar Alterações",
+            command=salvar_edicao
+        ).grid(row=6, column=1, sticky="e", padx=10, pady=10)
 
         pericias_frame = ctk.CTkScrollableFrame(tab_pericias)
         pericias_frame.pack(fill="both", expand=True, padx=20, pady=20)
