@@ -620,9 +620,32 @@ class GerenciadorGUI(ctk.CTk):
         valor_origem.grid(row=4, column=1, sticky="e", padx=10, pady=(0, 8))
 
         label_atributos = ctk.CTkLabel(info_frame, text="Atributos:", anchor="w")
-        valor_atributos = ctk.CTkLabel(info_frame, text=personagem.atributos, anchor="e", wraplength=320)
-        label_atributos.grid(row=5, column=0, sticky="w", padx=10, pady=(0, 8))
-        valor_atributos.grid(row=5, column=1, sticky="e", padx=10, pady=(0, 8))
+        label_atributos.grid(row=5, column=0, sticky="nw", padx=10, pady=(0, 8))
+        atributos_frame_ficha = ctk.CTkFrame(info_frame)
+        atributos_frame_ficha.grid(row=5, column=1, sticky="ew", padx=10, pady=(0, 8))
+        atributos_frame_ficha.grid_columnconfigure(tuple(range(5)), weight=1)
+
+        atributos_nomes_ficha = ["Força", "Agilidade", "Intelecto", "Presença", "Vigor"]
+        atributos_salvos_ficha = {}
+        for atributo in (personagem.atributos or "").split(","):
+            nome, separador, valor = atributo.partition("=")
+            if separador:
+                atributos_salvos_ficha[nome.strip()] = valor.strip()
+
+        valores_atributos_ficha = {}
+        for coluna, nome_atributo in enumerate(atributos_nomes_ficha):
+            ctk.CTkLabel(
+                atributos_frame_ficha,
+                text=nome_atributo,
+                font=ctk.CTkFont(size=11)
+            ).grid(row=0, column=coluna, sticky="w", padx=5, pady=(4, 0))
+            valor_atributo = ctk.CTkLabel(
+                atributos_frame_ficha,
+                text=atributos_salvos_ficha.get(nome_atributo, "1"),
+                font=ctk.CTkFont(size=16, weight="bold")
+            )
+            valor_atributo.grid(row=1, column=coluna, sticky="w", padx=5, pady=(0, 4))
+            valores_atributos_ficha[nome_atributo] = valor_atributo
 
         ctk.CTkLabel(info_frame, text="História:", anchor="w").grid(row=6, column=0, columnspan=2, sticky="w", padx=10, pady=(10, 0))
         historia_text = ctk.CTkTextbox(info_frame, width=460, height=180)
@@ -668,9 +691,26 @@ class GerenciadorGUI(ctk.CTk):
         ctk.CTkLabel(edicao_frame, text="Atributos:", anchor="w").grid(
             row=3, column=0, sticky="nw", padx=10, pady=10
         )
-        atributos_edicao = ctk.CTkEntry(edicao_frame)
-        atributos_edicao.grid(row=3, column=1, sticky="ew", padx=10, pady=10)
-        atributos_edicao.insert(0, personagem.atributos or "")
+        atributos_frame_edicao = ctk.CTkFrame(edicao_frame)
+        atributos_frame_edicao.grid(row=3, column=1, sticky="ew", padx=10, pady=10)
+        atributos_frame_edicao.grid_columnconfigure(tuple(range(5)), weight=1)
+
+        atributos_nomes = ["Força", "Agilidade", "Intelecto", "Presença", "Vigor"]
+        atributos_salvos = {}
+        for atributo in (personagem.atributos or "").split(","):
+            nome, separador, valor = atributo.partition("=")
+            if separador:
+                atributos_salvos[nome.strip()] = valor.strip()
+
+        atributos_edicao = {}
+        for coluna, nome_atributo in enumerate(atributos_nomes):
+            ctk.CTkLabel(atributos_frame_edicao, text=nome_atributo).grid(
+                row=0, column=coluna, sticky="w", padx=5, pady=(0, 5)
+            )
+            valor_atributo = ctk.CTkEntry(atributos_frame_edicao, width=70)
+            valor_atributo.grid(row=1, column=coluna, sticky="ew", padx=5, pady=5)
+            valor_atributo.insert(0, atributos_salvos.get(nome_atributo, "1"))
+            atributos_edicao[nome_atributo] = valor_atributo
 
         ctk.CTkLabel(edicao_frame, text="História:", anchor="w").grid(
             row=4, column=0, columnspan=2, sticky="w", padx=10, pady=(10, 0)
@@ -690,6 +730,14 @@ class GerenciadorGUI(ctk.CTk):
                 messagebox.showerror("Erro", "O NEX deve ser um número entre 0 e 100.")
                 return
 
+            atributos_valores = []
+            for nome_atributo in atributos_nomes:
+                valor = atributos_edicao[nome_atributo].get().strip()
+                if not valor.isdigit():
+                    messagebox.showerror("Erro", f"O valor de {nome_atributo} deve ser numérico.")
+                    return
+                atributos_valores.append(f"{nome_atributo}={valor}")
+
             db = SessionLocal()
             try:
                 personagem_db = db.query(Personagem).filter(Personagem.id == personagem.id).first()
@@ -700,7 +748,7 @@ class GerenciadorGUI(ctk.CTk):
                 personagem_db.nivel = int(nivel_texto)
                 personagem_db.nex = int(nex_texto)
                 personagem_db.origem = origem_edicao.get().strip()
-                personagem_db.atributos = atributos_edicao.get().strip()
+                personagem_db.atributos = ", ".join(atributos_valores)
                 personagem_db.historia = historia_edicao.get("1.0", "end").strip()
                 db.commit()
 
@@ -715,7 +763,13 @@ class GerenciadorGUI(ctk.CTk):
                 valor_nivel.configure(text=str(personagem.nivel))
                 valor_nex.configure(text=f"{personagem.nex}%")
                 valor_origem.configure(text=personagem.origem or "Não informada")
-                valor_atributos.configure(text=personagem.atributos)
+                atributos_atualizados = {}
+                for atributo in (personagem.atributos or "").split(","):
+                    nome, separador, valor = atributo.partition("=")
+                    if separador:
+                        atributos_atualizados[nome.strip()] = valor.strip()
+                for nome_atributo, valor_atributo in valores_atributos_ficha.items():
+                    valor_atributo.configure(text=atributos_atualizados.get(nome_atributo, "1"))
                 historia_text.configure(state="normal")
                 historia_text.delete("1.0", "end")
                 historia_text.insert("1.0", personagem.historia)
