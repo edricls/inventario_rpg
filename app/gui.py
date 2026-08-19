@@ -582,6 +582,38 @@ class GerenciadorGUI(ctk.CTk):
         finally:
             db.close()
 
+    def calcular_pv_pd(self, personagem, nivel=None, atributos=None):
+        nivel_atual = nivel if nivel is not None else personagem.nivel
+        nivel_atual = int(nivel_atual) if str(nivel_atual).isdigit() else 1
+        atributos_texto = atributos if atributos is not None else personagem.atributos
+        valores_atributos = {}
+        for atributo in (atributos_texto or "").split(","):
+            nome, separador, valor = atributo.partition("=")
+            if separador:
+                try:
+                    valores_atributos[nome.strip()] = int(valor.strip())
+                except ValueError:
+                    valores_atributos[nome.strip()] = 0
+
+        vigor = valores_atributos.get("Vigor", 0)
+        presenca = valores_atributos.get("Presença", 0)
+        niveis_adicionais = max(nivel_atual - 1, 0)
+
+        if personagem.classe == "Combatente":
+            pv = 20 + vigor + niveis_adicionais * (4 + vigor)
+            pd = 6 + presenca + niveis_adicionais * (3 + presenca)
+        elif personagem.classe == "Especialista":
+            pv = 16 + vigor + niveis_adicionais * (3 + vigor)
+            pd = 8 + presenca + niveis_adicionais * (4 + presenca)
+        elif personagem.classe == "Ocultista":
+            pv = 12 + vigor + niveis_adicionais * (2 + vigor)
+            pd = 10 + presenca + niveis_adicionais * (5 + presenca)
+        else:
+            pv = 8 + vigor + niveis_adicionais * 2
+            pd = 4 + presenca + niveis_adicionais * 2
+
+        return pv, pd
+
     def abrir_ficha(self, personagem):
         ficha = ctk.CTkToplevel(self)
         ficha.title(f"Ficha de {personagem.nome}")
@@ -615,35 +647,44 @@ class GerenciadorGUI(ctk.CTk):
         info_frame.grid_columnconfigure(0, weight=0)
         info_frame.grid_columnconfigure(1, weight=1)
 
+        pv_inicial, pd_inicial = self.calcular_pv_pd(personagem)
+        recursos_frame_ficha = ctk.CTkFrame(info_frame)
+        recursos_frame_ficha.grid(row=0, column=0, columnspan=2, sticky="ew", padx=10, pady=(0, 8))
+        recursos_frame_ficha.grid_columnconfigure((0, 1), weight=1)
+        valor_pv_ficha = ctk.CTkLabel(recursos_frame_ficha, text=f"PV: {pv_inicial}", font=ctk.CTkFont(size=16, weight="bold"))
+        valor_pv_ficha.grid(row=0, column=0, sticky="w", padx=10, pady=8)
+        valor_pd_ficha = ctk.CTkLabel(recursos_frame_ficha, text=f"PD: {pd_inicial}", font=ctk.CTkFont(size=16, weight="bold"))
+        valor_pd_ficha.grid(row=0, column=1, sticky="w", padx=10, pady=8)
+
         label_classe = ctk.CTkLabel(info_frame, text="Classe:", anchor="w")
         valor_classe = ctk.CTkLabel(info_frame, text=personagem.classe, anchor="e")
-        label_classe.grid(row=0, column=0, sticky="w", padx=10, pady=(0, 8))
-        valor_classe.grid(row=0, column=1, sticky="e", padx=10, pady=(0, 8))
+        label_classe.grid(row=1, column=0, sticky="w", padx=10, pady=(0, 8))
+        valor_classe.grid(row=1, column=1, sticky="e", padx=10, pady=(0, 8))
 
         label_nivel = ctk.CTkLabel(info_frame, text="Nível:", anchor="w")
         valor_nivel = ctk.CTkLabel(info_frame, text=str(personagem.nivel), anchor="e")
-        label_nivel.grid(row=1, column=0, sticky="w", padx=10, pady=(0, 8))
-        valor_nivel.grid(row=1, column=1, sticky="e", padx=10, pady=(0, 8))
+        label_nivel.grid(row=2, column=0, sticky="w", padx=10, pady=(0, 8))
+        valor_nivel.grid(row=2, column=1, sticky="e", padx=10, pady=(0, 8))
 
         label_nex = ctk.CTkLabel(info_frame, text="NEX:", anchor="w")
         valor_nex = ctk.CTkLabel(info_frame, text=f"{personagem.nex}%", anchor="e")
-        label_nex.grid(row=2, column=0, sticky="w", padx=10, pady=(0, 8))
-        valor_nex.grid(row=2, column=1, sticky="e", padx=10, pady=(0, 8))
+        label_nex.grid(row=3, column=0, sticky="w", padx=10, pady=(0, 8))
+        valor_nex.grid(row=3, column=1, sticky="e", padx=10, pady=(0, 8))
 
         label_trilha = ctk.CTkLabel(info_frame, text="Trilha:", anchor="w")
         valor_trilha = ctk.CTkLabel(info_frame, text=personagem.trilha, anchor="e")
-        label_trilha.grid(row=3, column=0, sticky="w", padx=10, pady=(0, 8))
-        valor_trilha.grid(row=3, column=1, sticky="e", padx=10, pady=(0, 8))
+        label_trilha.grid(row=4, column=0, sticky="w", padx=10, pady=(0, 8))
+        valor_trilha.grid(row=4, column=1, sticky="e", padx=10, pady=(0, 8))
 
         label_origem = ctk.CTkLabel(info_frame, text="Origem:", anchor="w")
         valor_origem = ctk.CTkLabel(info_frame, text=getattr(personagem, "origem", None) or "Não informada", anchor="e")
-        label_origem.grid(row=4, column=0, sticky="w", padx=10, pady=(0, 8))
-        valor_origem.grid(row=4, column=1, sticky="e", padx=10, pady=(0, 8))
+        label_origem.grid(row=5, column=0, sticky="w", padx=10, pady=(0, 8))
+        valor_origem.grid(row=5, column=1, sticky="e", padx=10, pady=(0, 8))
 
         label_atributos = ctk.CTkLabel(info_frame, text="Atributos:", anchor="w")
-        label_atributos.grid(row=5, column=0, sticky="nw", padx=10, pady=(0, 8))
+        label_atributos.grid(row=6, column=0, sticky="nw", padx=10, pady=(0, 8))
         atributos_frame_ficha = ctk.CTkFrame(info_frame)
-        atributos_frame_ficha.grid(row=5, column=1, sticky="ew", padx=10, pady=(0, 8))
+        atributos_frame_ficha.grid(row=6, column=1, sticky="ew", padx=10, pady=(0, 8))
         atributos_frame_ficha.grid_columnconfigure(tuple(range(5)), weight=1)
 
         atributos_nomes_ficha = ["Força", "Agilidade", "Intelecto", "Presença", "Vigor"]
@@ -668,10 +709,10 @@ class GerenciadorGUI(ctk.CTk):
             valor_atributo.grid(row=1, column=coluna, sticky="w", padx=5, pady=(0, 4))
             valores_atributos_ficha[nome_atributo] = valor_atributo
 
-        ctk.CTkLabel(info_frame, text="História:", anchor="w").grid(row=6, column=0, columnspan=2, sticky="w", padx=10, pady=(10, 0))
+        ctk.CTkLabel(info_frame, text="História:", anchor="w").grid(row=7, column=0, columnspan=2, sticky="w", padx=10, pady=(10, 0))
         historia_text = ctk.CTkTextbox(info_frame, width=460, height=180)
-        historia_text.grid(row=7, column=0, columnspan=2, sticky="nsew", padx=10, pady=(0, 10))
-        info_frame.grid_rowconfigure(7, weight=1)
+        historia_text.grid(row=8, column=0, columnspan=2, sticky="nsew", padx=10, pady=(0, 10))
+        info_frame.grid_rowconfigure(8, weight=1)
         historia_text.insert("1.0", personagem.historia)
         historia_text.configure(state="disabled")
 
@@ -680,19 +721,35 @@ class GerenciadorGUI(ctk.CTk):
         edicao_frame.pack(fill="both", expand=True, padx=20, pady=20)
         edicao_frame.grid_columnconfigure(1, weight=1)
 
+        pv_edicao, pd_edicao = self.calcular_pv_pd(personagem)
+        recursos_frame_edicao = ctk.CTkFrame(edicao_frame)
+        recursos_frame_edicao.grid(row=0, column=0, columnspan=2, sticky="ew", padx=10, pady=(0, 8))
+        recursos_frame_edicao.grid_columnconfigure((0, 1), weight=1)
+        valor_pv_edicao = ctk.CTkLabel(recursos_frame_edicao, text=f"PV: {pv_edicao}", font=ctk.CTkFont(size=16, weight="bold"))
+        valor_pv_edicao.grid(row=0, column=0, sticky="w", padx=10, pady=8)
+        valor_pd_edicao = ctk.CTkLabel(recursos_frame_edicao, text=f"PD: {pd_edicao}", font=ctk.CTkFont(size=16, weight="bold"))
+        valor_pd_edicao.grid(row=0, column=1, sticky="w", padx=10, pady=8)
+
+        ctk.CTkLabel(edicao_frame, text="Classe:", anchor="w").grid(
+            row=1, column=0, sticky="w", padx=10, pady=10
+        )
+        ctk.CTkLabel(edicao_frame, text=personagem.classe, anchor="e").grid(
+            row=1, column=1, sticky="e", padx=10, pady=10
+        )
+
         classe_sobrevivente = personagem.classe == "Sobrevivente"
         limite_nivel_edicao = 4 if classe_sobrevivente else 20
         nome_nivel_edicao = "Estágio" if classe_sobrevivente else "Nível"
 
         ctk.CTkLabel(edicao_frame, text=f"{nome_nivel_edicao}:", anchor="w").grid(
-            row=0, column=0, sticky="w", padx=10, pady=10
+            row=2, column=0, sticky="w", padx=10, pady=10
         )
         nivel_edicao = ctk.CTkOptionMenu(
             edicao_frame,
             values=[str(nivel) for nivel in range(1, limite_nivel_edicao + 1)],
             width=100
         )
-        nivel_edicao.grid(row=0, column=1, sticky="w", padx=10, pady=10)
+        nivel_edicao.grid(row=2, column=1, sticky="w", padx=10, pady=10)
         nivel_edicao.set(
             str(personagem.nivel)
             if 1 <= personagem.nivel <= limite_nivel_edicao
@@ -700,14 +757,14 @@ class GerenciadorGUI(ctk.CTk):
         )
 
         ctk.CTkLabel(edicao_frame, text="NEX:", anchor="w").grid(
-            row=1, column=0, sticky="w", padx=10, pady=10
+            row=3, column=0, sticky="w", padx=10, pady=10
         )
         nex_edicao = ctk.CTkEntry(edicao_frame, width=100)
-        nex_edicao.grid(row=1, column=1, sticky="w", padx=10, pady=10)
+        nex_edicao.grid(row=3, column=1, sticky="w", padx=10, pady=10)
         nex_edicao.insert(0, str(personagem.nex))
 
         nex_edicao_erro = ctk.CTkLabel(edicao_frame, text="", text_color="red", anchor="w")
-        nex_edicao_erro.grid(row=2, column=1, sticky="w", padx=10, pady=(0, 4))
+        nex_edicao_erro.grid(row=4, column=1, sticky="w", padx=10, pady=(0, 4))
 
         def validar_nex_edicao(event=None):
             nex_texto = nex_edicao.get().strip()
@@ -722,17 +779,17 @@ class GerenciadorGUI(ctk.CTk):
         validar_nex_edicao()
 
         ctk.CTkLabel(edicao_frame, text="Origem:", anchor="w").grid(
-            row=3, column=0, sticky="w", padx=10, pady=10
+            row=5, column=0, sticky="w", padx=10, pady=10
         )
         origem_edicao = ScrollableOriginOptionMenu(edicao_frame, values=ORIGENS, width=460)
-        origem_edicao.grid(row=3, column=1, sticky="ew", padx=10, pady=10)
+        origem_edicao.grid(row=5, column=1, sticky="ew", padx=10, pady=10)
         origem_edicao.set(getattr(personagem, "origem", None) or ORIGENS[0])
 
         ctk.CTkLabel(edicao_frame, text="Atributos:", anchor="w").grid(
-            row=4, column=0, sticky="nw", padx=10, pady=10
+            row=6, column=0, sticky="nw", padx=10, pady=10
         )
         atributos_frame_edicao = ctk.CTkFrame(edicao_frame)
-        atributos_frame_edicao.grid(row=4, column=1, sticky="ew", padx=10, pady=10)
+        atributos_frame_edicao.grid(row=6, column=1, sticky="ew", padx=10, pady=10)
         atributos_frame_edicao.grid_columnconfigure(tuple(range(5)), weight=1)
 
         atributos_nomes = ["Força", "Agilidade", "Intelecto", "Presença", "Vigor"]
@@ -753,11 +810,11 @@ class GerenciadorGUI(ctk.CTk):
             atributos_edicao[nome_atributo] = valor_atributo
 
         ctk.CTkLabel(edicao_frame, text="História:", anchor="w").grid(
-            row=5, column=0, columnspan=2, sticky="w", padx=10, pady=(10, 0)
+            row=7, column=0, columnspan=2, sticky="w", padx=10, pady=(10, 0)
         )
         historia_edicao = ctk.CTkTextbox(edicao_frame, height=260)
-        historia_edicao.grid(row=6, column=0, columnspan=2, sticky="nsew", padx=10, pady=(0, 10))
-        edicao_frame.grid_rowconfigure(6, weight=1)
+        historia_edicao.grid(row=8, column=0, columnspan=2, sticky="nsew", padx=10, pady=(0, 10))
+        edicao_frame.grid_rowconfigure(8, weight=1)
         historia_edicao.insert("1.0", personagem.historia or "")
 
         def salvar_edicao():
@@ -800,6 +857,11 @@ class GerenciadorGUI(ctk.CTk):
                 personagem.origem = personagem_db.origem
                 personagem.atributos = personagem_db.atributos
                 personagem.historia = personagem_db.historia
+                pv_atualizado, pd_atualizado = self.calcular_pv_pd(personagem)
+                valor_pv_ficha.configure(text=f"PV: {pv_atualizado}")
+                valor_pd_ficha.configure(text=f"PD: {pd_atualizado}")
+                valor_pv_edicao.configure(text=f"PV: {pv_atualizado}")
+                valor_pd_edicao.configure(text=f"PD: {pd_atualizado}")
                 resumo_ficha.configure(
                     text=f"Classe: {personagem.classe} | Nível: {personagem.nivel} | NEX: {personagem.nex}% | Origem: {personagem.origem or 'Não informada'}"
                 )
@@ -830,7 +892,7 @@ class GerenciadorGUI(ctk.CTk):
             edicao_frame,
             text="Salvar Alterações",
             command=salvar_edicao
-        ).grid(row=7, column=1, sticky="e", padx=10, pady=10)
+        ).grid(row=9, column=1, sticky="e", padx=10, pady=10)
 
         pericias_frame = ctk.CTkScrollableFrame(tab_pericias)
         pericias_frame.pack(fill="both", expand=True, padx=20, pady=20)
