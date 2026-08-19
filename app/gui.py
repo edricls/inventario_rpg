@@ -311,7 +311,7 @@ class GerenciadorGUI(ctk.CTk):
     def validar_nivel(self, event=None):
         nivel_texto = self.entradas["nivel"].get().strip()
         classe_selecionada = self.entradas["classe"].get().strip()
-        limite_inferior = 1 if classe_selecionada == "Sobrevivente" else 0
+        limite_inferior = 1
         limite_superior = 4 if classe_selecionada == "Sobrevivente" else 20
         nome_nivel = "Estágio" if classe_selecionada == "Sobrevivente" else "Nível"
 
@@ -370,7 +370,7 @@ class GerenciadorGUI(ctk.CTk):
 
         self.nivel_label.configure(text="Estágio:" if classe_selecionada == "Sobrevivente" else "Nível:")
         nivel_texto = self.entradas["nivel"].get().strip()
-        limite_inferior = 1 if classe_selecionada == "Sobrevivente" else 0
+        limite_inferior = 1
         limite_superior = 4 if classe_selecionada == "Sobrevivente" else 20
         if ajustar_nivel and (not nivel_texto.isdigit() or not limite_inferior <= int(nivel_texto) <= limite_superior):
             self.entradas["nivel"].delete(0, "end")
@@ -431,7 +431,7 @@ class GerenciadorGUI(ctk.CTk):
                 nivel = 1
             else:
                 classe_selecionada = self.entradas["classe"].get().strip()
-                limite_inferior = 1 if classe_selecionada == "Sobrevivente" else 0
+                limite_inferior = 1
                 limite_superior = 4 if classe_selecionada == "Sobrevivente" else 20
                 nome_nivel = "Estágio" if classe_selecionada == "Sobrevivente" else "Nível"
                 if not nivel_texto.isdigit() or not (limite_inferior <= int(nivel_texto) <= limite_superior):
@@ -680,40 +680,59 @@ class GerenciadorGUI(ctk.CTk):
         edicao_frame.pack(fill="both", expand=True, padx=20, pady=20)
         edicao_frame.grid_columnconfigure(1, weight=1)
 
-        ctk.CTkLabel(edicao_frame, text="Nível:", anchor="w").grid(
+        classe_sobrevivente = personagem.classe == "Sobrevivente"
+        limite_nivel_edicao = 4 if classe_sobrevivente else 20
+        nome_nivel_edicao = "Estágio" if classe_sobrevivente else "Nível"
+
+        ctk.CTkLabel(edicao_frame, text=f"{nome_nivel_edicao}:", anchor="w").grid(
             row=0, column=0, sticky="w", padx=10, pady=10
         )
         nivel_edicao = ctk.CTkOptionMenu(
             edicao_frame,
-            values=[str(nivel) for nivel in range(21)],
+            values=[str(nivel) for nivel in range(1, limite_nivel_edicao + 1)],
             width=100
         )
         nivel_edicao.grid(row=0, column=1, sticky="w", padx=10, pady=10)
-        nivel_edicao.set(str(personagem.nivel))
+        nivel_edicao.set(
+            str(personagem.nivel)
+            if 1 <= personagem.nivel <= limite_nivel_edicao
+            else "1"
+        )
 
         ctk.CTkLabel(edicao_frame, text="NEX:", anchor="w").grid(
             row=1, column=0, sticky="w", padx=10, pady=10
         )
-        nex_edicao = ctk.CTkOptionMenu(
-            edicao_frame,
-            values=[str(nex) for nex in range(101)],
-            width=100
-        )
+        nex_edicao = ctk.CTkEntry(edicao_frame, width=100)
         nex_edicao.grid(row=1, column=1, sticky="w", padx=10, pady=10)
-        nex_edicao.set(str(personagem.nex))
+        nex_edicao.insert(0, str(personagem.nex))
+
+        nex_edicao_erro = ctk.CTkLabel(edicao_frame, text="", text_color="red", anchor="w")
+        nex_edicao_erro.grid(row=2, column=1, sticky="w", padx=10, pady=(0, 4))
+
+        def validar_nex_edicao(event=None):
+            nex_texto = nex_edicao.get().strip()
+            if not nex_texto.isdigit() or not 0 <= int(nex_texto) <= 99:
+                nex_edicao_erro.configure(text="O valor de NEX deve ser entre 0 e 99")
+                return False
+            nex_edicao_erro.configure(text="")
+            return True
+
+        nex_edicao.bind("<KeyRelease>", validar_nex_edicao)
+        nex_edicao.bind("<FocusOut>", validar_nex_edicao)
+        validar_nex_edicao()
 
         ctk.CTkLabel(edicao_frame, text="Origem:", anchor="w").grid(
-            row=2, column=0, sticky="w", padx=10, pady=10
+            row=3, column=0, sticky="w", padx=10, pady=10
         )
         origem_edicao = ScrollableOriginOptionMenu(edicao_frame, values=ORIGENS, width=460)
-        origem_edicao.grid(row=2, column=1, sticky="ew", padx=10, pady=10)
+        origem_edicao.grid(row=3, column=1, sticky="ew", padx=10, pady=10)
         origem_edicao.set(getattr(personagem, "origem", None) or ORIGENS[0])
 
         ctk.CTkLabel(edicao_frame, text="Atributos:", anchor="w").grid(
-            row=3, column=0, sticky="nw", padx=10, pady=10
+            row=4, column=0, sticky="nw", padx=10, pady=10
         )
         atributos_frame_edicao = ctk.CTkFrame(edicao_frame)
-        atributos_frame_edicao.grid(row=3, column=1, sticky="ew", padx=10, pady=10)
+        atributos_frame_edicao.grid(row=4, column=1, sticky="ew", padx=10, pady=10)
         atributos_frame_edicao.grid_columnconfigure(tuple(range(5)), weight=1)
 
         atributos_nomes = ["Força", "Agilidade", "Intelecto", "Presença", "Vigor"]
@@ -734,21 +753,24 @@ class GerenciadorGUI(ctk.CTk):
             atributos_edicao[nome_atributo] = valor_atributo
 
         ctk.CTkLabel(edicao_frame, text="História:", anchor="w").grid(
-            row=4, column=0, columnspan=2, sticky="w", padx=10, pady=(10, 0)
+            row=5, column=0, columnspan=2, sticky="w", padx=10, pady=(10, 0)
         )
         historia_edicao = ctk.CTkTextbox(edicao_frame, height=260)
-        historia_edicao.grid(row=5, column=0, columnspan=2, sticky="nsew", padx=10, pady=(0, 10))
-        edicao_frame.grid_rowconfigure(5, weight=1)
+        historia_edicao.grid(row=6, column=0, columnspan=2, sticky="nsew", padx=10, pady=(0, 10))
+        edicao_frame.grid_rowconfigure(6, weight=1)
         historia_edicao.insert("1.0", personagem.historia or "")
 
         def salvar_edicao():
             nivel_texto = nivel_edicao.get().strip()
             nex_texto = nex_edicao.get().strip()
-            if not nivel_texto.isdigit() or not 0 <= int(nivel_texto) <= 20:
-                messagebox.showerror("Erro", "O nível deve ser um número entre 0 e 20.")
+            if not nivel_texto.isdigit() or not 1 <= int(nivel_texto) <= limite_nivel_edicao:
+                messagebox.showerror(
+                    "Erro",
+                    f"O {nome_nivel_edicao.lower()} deve ser um número entre 1 e {limite_nivel_edicao}."
+                )
                 return
-            if not nex_texto.isdigit() or not 0 <= int(nex_texto) <= 100:
-                messagebox.showerror("Erro", "O NEX deve ser um número entre 0 e 100.")
+            if not nex_texto.isdigit() or not 0 <= int(nex_texto) <= 99:
+                messagebox.showerror("Erro", "O valor de NEX deve ser entre 0 e 99.")
                 return
 
             atributos_valores = []
@@ -808,7 +830,7 @@ class GerenciadorGUI(ctk.CTk):
             edicao_frame,
             text="Salvar Alterações",
             command=salvar_edicao
-        ).grid(row=6, column=1, sticky="e", padx=10, pady=10)
+        ).grid(row=7, column=1, sticky="e", padx=10, pady=10)
 
         pericias_frame = ctk.CTkScrollableFrame(tab_pericias)
         pericias_frame.pack(fill="both", expand=True, padx=20, pady=20)
