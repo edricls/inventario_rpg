@@ -210,7 +210,8 @@ class GerenciadorGUI(ctk.CTk):
         self.entradas["classe"] = classe_entrada
         row += 1
 
-        ctk.CTkLabel(self.frame_criar, text="Nível:").grid(row=row, column=0, sticky="w", padx=10, pady=10)
+        self.nivel_label = ctk.CTkLabel(self.frame_criar, text="Nível:")
+        self.nivel_label.grid(row=row, column=0, sticky="w", padx=10, pady=10)
         nivel_entrada = ctk.CTkEntry(self.frame_criar, width=90)
         nivel_entrada.grid(row=row, column=1, sticky="w", padx=10, pady=(8, 0))
         self.entradas["nivel"] = nivel_entrada
@@ -309,7 +310,12 @@ class GerenciadorGUI(ctk.CTk):
 
     def validar_nivel(self, event=None):
         nivel_texto = self.entradas["nivel"].get().strip()
-        # Limitar a no máximo 2 caracteres para o campo Nível
+        classe_selecionada = self.entradas["classe"].get().strip()
+        limite_inferior = 1 if classe_selecionada == "Sobrevivente" else 0
+        limite_superior = 4 if classe_selecionada == "Sobrevivente" else 20
+        nome_nivel = "Estágio" if classe_selecionada == "Sobrevivente" else "Nível"
+
+        # Limitar a no máximo 2 caracteres para o campo Nível/Estágio
         if len(nivel_texto) > 2:
             nivel_texto = nivel_texto[:2]
             self.entradas["nivel"].delete(0, "end")
@@ -320,13 +326,13 @@ class GerenciadorGUI(ctk.CTk):
             return True
 
         if not nivel_texto.isdigit():
-            self.nivel_erro_label.configure(text="Digite um numero de 0 a 20")
+            self.nivel_erro_label.configure(text=f"Digite um numero de {limite_inferior} a {limite_superior} para {nome_nivel}")
             self.atualizar_estado_trilha()
             return False
 
         nivel = int(nivel_texto)
-        if nivel < 0 or nivel > 20:
-            self.nivel_erro_label.configure(text="Digite um numero de 0 a 20")
+        if nivel < limite_inferior or nivel > limite_superior:
+            self.nivel_erro_label.configure(text=f"Digite um numero de {limite_inferior} a {limite_superior} para {nome_nivel}")
             self.atualizar_estado_trilha()
             return False
 
@@ -357,10 +363,19 @@ class GerenciadorGUI(ctk.CTk):
         self.nex_erro_label.configure(text="")
         return True
 
-    def atualizar_trilha_opcoes(self, classe_selecionada):
+    def atualizar_trilha_opcoes(self, classe_selecionada, ajustar_nivel=True):
         trilha_menu = self.entradas.get("trilha")
         if trilha_menu is None:
             return
+
+        self.nivel_label.configure(text="Estágio:" if classe_selecionada == "Sobrevivente" else "Nível:")
+        nivel_texto = self.entradas["nivel"].get().strip()
+        limite_inferior = 1 if classe_selecionada == "Sobrevivente" else 0
+        limite_superior = 4 if classe_selecionada == "Sobrevivente" else 20
+        if ajustar_nivel and (not nivel_texto.isdigit() or not limite_inferior <= int(nivel_texto) <= limite_superior):
+            self.entradas["nivel"].delete(0, "end")
+            self.entradas["nivel"].insert(0, str(limite_inferior))
+            self.nivel_erro_label.configure(text="")
 
         nivel_texto = self.entradas["nivel"].get().strip()
         if nivel_texto.isdigit() and int(nivel_texto) < 2:
@@ -384,7 +399,7 @@ class GerenciadorGUI(ctk.CTk):
 
         trilha_menu.configure(state="normal")
         classe_selecionada = self.entradas["classe"].get().strip()
-        self.atualizar_trilha_opcoes(classe_selecionada)
+        self.atualizar_trilha_opcoes(classe_selecionada, ajustar_nivel=False)
 
     def criar_aba_listar(self):
         button_frame = ctk.CTkFrame(self.frame_listar)
@@ -414,18 +429,24 @@ class GerenciadorGUI(ctk.CTk):
                 self.entradas["nivel"].insert(0, nivel_texto)
             if nivel_texto == "":
                 nivel = 1
-            elif not nivel_texto.isdigit() or not (0 <= int(nivel_texto) <= 20):
-                self.nivel_erro_label.configure(text="Digite um numero de 0 a 20")
-                return
             else:
+                classe_selecionada = self.entradas["classe"].get().strip()
+                limite_inferior = 1 if classe_selecionada == "Sobrevivente" else 0
+                limite_superior = 4 if classe_selecionada == "Sobrevivente" else 20
+                nome_nivel = "Estágio" if classe_selecionada == "Sobrevivente" else "Nível"
+                if not nivel_texto.isdigit() or not (limite_inferior <= int(nivel_texto) <= limite_superior):
+                    self.nivel_erro_label.configure(
+                        text=f"Digite um numero de {limite_inferior} a {limite_superior} para {nome_nivel}"
+                    )
+                    return
                 nivel = int(nivel_texto)
 
-                nex_texto = self.entradas["nex"].get().strip()
-                # Garantir que o texto do NEX tenha no máximo 2 caracteres
-                if len(nex_texto) > 2:
-                    nex_texto = nex_texto[:2]
-                    self.entradas["nex"].delete(0, "end")
-                    self.entradas["nex"].insert(0, nex_texto)
+            nex_texto = self.entradas["nex"].get().strip()
+            # Garantir que o texto do NEX tenha no máximo 2 caracteres
+            if len(nex_texto) > 2:
+                nex_texto = nex_texto[:2]
+                self.entradas["nex"].delete(0, "end")
+                self.entradas["nex"].insert(0, nex_texto)
             if nex_texto == "":
                 nex = 0
             elif not nex_texto.isdigit() or not (0 <= int(nex_texto) <= 100):
