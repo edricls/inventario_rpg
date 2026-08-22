@@ -1,7 +1,12 @@
 ﻿import json
 import customtkinter as ctk
 from tkinter import messagebox, StringVar
-from app.character_rules import calcular_pv_pd, obter_limites_nivel, obter_nome_nivel
+from app.character_rules import (
+    calcular_pv_pd,
+    obter_limites_nivel,
+    obter_nome_nivel,
+    validar_nex_texto,
+)
 from app.character_storage import (
     atualizar_personagem,
     listar_personagens,
@@ -255,23 +260,10 @@ class GerenciadorGUI(ctk.CTk):
         return True
 
     def validar_nex(self, event=None):
-        nex_texto = self.entradas["nex"].get().strip()
-        # Limitar a no máximo 2 caracteres para o campo NEX
-        if len(nex_texto) > 2:
-            nex_texto = nex_texto[:2]
-            self.entradas["nex"].delete(0, "end")
-            self.entradas["nex"].insert(0, nex_texto)
-        if nex_texto == "":
-            self.nex_erro_label.configure(text="")
-            return True
-
-        if not nex_texto.isdigit():
-            self.nex_erro_label.configure(text="O Valor de Nex deve ser entre 0 e 100")
-            return False
-
-        nex = int(nex_texto)
-        if nex < 0 or nex > 100:
-            self.nex_erro_label.configure(text="O Valor de Nex deve ser entre 0 e 100")
+        nex_texto = self.entradas["nex"].get()
+        _, _, erro = validar_nex_texto(nex_texto)
+        if erro:
+            self.nex_erro_label.configure(text=erro)
             return False
 
         self.nex_erro_label.configure(text="")
@@ -353,19 +345,10 @@ class GerenciadorGUI(ctk.CTk):
                     return
                 nivel = int(nivel_texto)
 
-            nex_texto = self.entradas["nex"].get().strip()
-            # Garantir que o texto do NEX tenha no máximo 2 caracteres
-            if len(nex_texto) > 2:
-                nex_texto = nex_texto[:2]
-                self.entradas["nex"].delete(0, "end")
-                self.entradas["nex"].insert(0, nex_texto)
-            if nex_texto == "":
-                nex = 0
-            elif not nex_texto.isdigit() or not (0 <= int(nex_texto) <= 100):
-                self.nex_erro_label.configure(text="O Valor de Nex deve ser entre 0 e 100")
+            nex_texto, nex, erro_nex = validar_nex_texto(self.entradas["nex"].get())
+            if erro_nex:
+                self.nex_erro_label.configure(text=erro_nex)
                 return
-            else:
-                nex = int(nex_texto)
 
             atributos_valores = []
             for label, chave in ATRIBUTOS:
@@ -622,9 +605,10 @@ class GerenciadorGUI(ctk.CTk):
         nex_edicao_erro.grid(row=4, column=1, sticky="w", padx=10, pady=(0, 4))
 
         def validar_nex_edicao(event=None):
-            nex_texto = nex_edicao.get().strip()
-            if not nex_texto.isdigit() or not 0 <= int(nex_texto) <= 99:
-                nex_edicao_erro.configure(text="O valor de NEX deve ser entre 0 e 99")
+            nex_texto = nex_edicao.get()
+            _, _, erro = validar_nex_texto(nex_texto)
+            if erro:
+                nex_edicao_erro.configure(text=erro)
                 return False
             nex_edicao_erro.configure(text="")
             return True
@@ -674,15 +658,15 @@ class GerenciadorGUI(ctk.CTk):
 
         def salvar_edicao():
             nivel_texto = nivel_edicao.get().strip()
-            nex_texto = nex_edicao.get().strip()
+            _, nex, erro_nex = validar_nex_texto(nex_edicao.get())
             if not nivel_texto.isdigit() or not 1 <= int(nivel_texto) <= limite_nivel_edicao:
                 messagebox.showerror(
                     "Erro",
                     f"O {nome_nivel_edicao.lower()} deve ser um número entre 1 e {limite_nivel_edicao}."
                 )
                 return
-            if not nex_texto.isdigit() or not 0 <= int(nex_texto) <= 99:
-                messagebox.showerror("Erro", "O valor de NEX deve ser entre 0 e 99.")
+            if erro_nex:
+                messagebox.showerror("Erro", erro_nex + ".")
                 return
 
             atributos_valores = []
@@ -697,7 +681,7 @@ class GerenciadorGUI(ctk.CTk):
                 dados_atualizados = atualizar_personagem(
                     personagem.id,
                     int(nivel_texto),
-                    int(nex_texto),
+                    nex,
                     origem_edicao.get().strip(),
                     ", ".join(atributos_valores),
                     historia_edicao.get("1.0", "end").strip(),

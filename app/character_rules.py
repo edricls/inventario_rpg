@@ -6,6 +6,17 @@ def obter_nome_nivel(classe):
     return "Estágio" if classe == "Sobrevivente" else "Nível"
 
 
+def validar_nex_texto(texto):
+    texto_normalizado = str(texto).strip()
+    if texto_normalizado == "":
+        return texto_normalizado, 0, None
+
+    if not texto_normalizado.isdigit() or not 0 <= int(texto_normalizado) <= 99:
+        return texto_normalizado, None, "O valor de NEX deve ser entre 0 e 99"
+
+    return texto_normalizado, int(texto_normalizado), None
+
+
 def calcular_pv_pd(personagem, nivel=None, atributos=None):
     nivel_atual = nivel if nivel is not None else personagem.nivel
     nivel_atual = int(nivel_atual) if str(nivel_atual).isdigit() else 1
