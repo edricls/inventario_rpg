@@ -22,6 +22,7 @@ from app.gui_data import (
     TRILHAS_POR_CLASSE,
     FILTROS_HABILIDADES,
     HABILIDADES_POR_CATEGORIA,
+    DESCRICOES_HABILIDADES,
 )
 from app.models import Personagem
 from app.pericia_storage import (
@@ -464,7 +465,7 @@ class GerenciadorGUI(ctk.CTk):
             habilidades_header,
             text="Adicionar Habilidade",
             command=lambda: self._abrir_seletor_habilidades(personagem)
-        ).pack(side="right")
+        ).pack(side="left")
 
         info_frame = ctk.CTkFrame(tab_dados)
         info_frame.pack(fill="both", expand=True, padx=20, pady=(0, 10))
@@ -585,8 +586,32 @@ class GerenciadorGUI(ctk.CTk):
         )
         busca_entrada.pack(side="left", fill="x", expand=True)
 
-        poderes_frame = ctk.CTkScrollableFrame(janela)
-        poderes_frame.pack(fill="both", expand=True, padx=20, pady=(0, 20))
+        conteudo_frame = ctk.CTkFrame(janela, fg_color="transparent")
+        conteudo_frame.pack(fill="both", expand=True, padx=20, pady=(0, 20))
+        conteudo_frame.grid_columnconfigure(0, weight=1)
+        conteudo_frame.grid_columnconfigure(1, weight=2)
+        conteudo_frame.grid_rowconfigure(0, weight=1)
+
+        poderes_frame = ctk.CTkScrollableFrame(conteudo_frame)
+        poderes_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
+
+        detalhes_frame = ctk.CTkFrame(conteudo_frame)
+        detalhes_frame.grid(row=0, column=1, sticky="nsew")
+        titulo_habilidade = ctk.CTkLabel(
+            detalhes_frame,
+            text="Selecione uma habilidade",
+            font=ctk.CTkFont(size=20, weight="bold"),
+            wraplength=260
+        )
+        titulo_habilidade.pack(anchor="nw", padx=20, pady=(20, 12))
+        descricao_habilidade = ctk.CTkLabel(
+            detalhes_frame,
+            text="A descricao da habilidade sera exibida aqui.",
+            anchor="nw",
+            justify="left",
+            wraplength=260
+        )
+        descricao_habilidade.pack(fill="x", anchor="nw", padx=20, pady=(0, 20))
 
         categoria_atual = "Combatente"
 
@@ -616,8 +641,18 @@ class GerenciadorGUI(ctk.CTk):
                     text=poder,
                     anchor="w",
                     fg_color="transparent",
-                    hover_color=("#D9D9D9", "#3A3A3A")
+                    hover_color=("#D9D9D9", "#3A3A3A"),
+                    command=lambda habilidade=poder: exibir_detalhes(habilidade)
                 ).pack(fill="x", padx=6, pady=3)
+
+        def exibir_detalhes(habilidade):
+            titulo_habilidade.configure(text=habilidade)
+            descricao_habilidade.configure(
+                text=DESCRICOES_HABILIDADES.get(
+                    habilidade,
+                    "Descricao desta habilidade ainda nao cadastrada."
+                )
+            )
 
         filtro = ctk.CTkOptionMenu(
             filtro_frame,
