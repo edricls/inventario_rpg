@@ -1,3 +1,5 @@
+import json
+
 from app.database import SessionLocal
 from app.models import Personagem
 
@@ -50,6 +52,32 @@ def remover_personagem(personagem):
     db = SessionLocal()
     try:
         db.delete(personagem)
+        db.commit()
+    finally:
+        db.close()
+
+
+def carregar_habilidades(personagem):
+    if not personagem.habilidades:
+        return []
+
+    try:
+        habilidades = json.loads(personagem.habilidades)
+        return habilidades if isinstance(habilidades, list) else []
+    except (TypeError, ValueError):
+        return []
+
+
+def salvar_habilidades(personagem, habilidades):
+    db = SessionLocal()
+    try:
+        personagem_db = db.query(Personagem).filter(Personagem.id == personagem.id).first()
+        if personagem_db is None:
+            return
+
+        habilidades_json = json.dumps(habilidades, ensure_ascii=False)
+        personagem_db.habilidades = habilidades_json
+        personagem.habilidades = habilidades_json
         db.commit()
     finally:
         db.close()

@@ -9,9 +9,11 @@ from app.character_rules import (
 )
 from app.character_storage import (
     atualizar_personagem,
+    carregar_habilidades,
     listar_personagens,
     remover_personagem,
     salvar_personagem as salvar_personagem_no_banco,
+    salvar_habilidades,
 )
 from app.gui_data import (
     ATRIBUTOS,
@@ -372,7 +374,8 @@ class GerenciadorGUI(ctk.CTk):
                 trilha=self.entradas["trilha"].get().strip(),
                 origem=self.entradas["origem"].get().strip(),
                 historia=self.entradas["historia"].get("1.0", "end").strip(),
-                pericias=json.dumps(dados_pericias_padrao(PERICIAS, ATRIBUTOS_PERICIAS))
+                pericias=json.dumps(dados_pericias_padrao(PERICIAS, ATRIBUTOS_PERICIAS)),
+                habilidades=json.dumps([])
             )
 
             salvar_personagem_no_banco(novo_p)
@@ -464,8 +467,68 @@ class GerenciadorGUI(ctk.CTk):
         ctk.CTkButton(
             habilidades_header,
             text="Adicionar Habilidade",
-            command=lambda: self._abrir_seletor_habilidades(personagem)
+            command=lambda: self._abrir_seletor_habilidades(personagem, atualizar_habilidades)
         ).pack(side="left")
+
+        habilidades_conteudo = ctk.CTkFrame(tab_habilidades, fg_color="transparent")
+        habilidades_conteudo.pack(fill="both", expand=True, padx=20, pady=(0, 20))
+        habilidades_conteudo.grid_columnconfigure(0, weight=1)
+        habilidades_conteudo.grid_columnconfigure(1, weight=2)
+        habilidades_conteudo.grid_rowconfigure(0, weight=1)
+
+        habilidades_frame = ctk.CTkScrollableFrame(habilidades_conteudo)
+        habilidades_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
+
+        habilidade_detalhes = ctk.CTkFrame(habilidades_conteudo)
+        habilidade_detalhes.grid(row=0, column=1, sticky="nsew")
+        habilidade_titulo = ctk.CTkLabel(
+            habilidade_detalhes,
+            text="Selecione uma habilidade",
+            font=ctk.CTkFont(size=20, weight="bold"),
+            wraplength=260
+        )
+        habilidade_titulo.pack(anchor="nw", padx=20, pady=(20, 12))
+        habilidade_descricao = ctk.CTkLabel(
+            habilidade_detalhes,
+            text="A descricao da habilidade sera exibida aqui.",
+            anchor="nw",
+            justify="left",
+            wraplength=260
+        )
+        habilidade_descricao.pack(fill="x", anchor="nw", padx=20, pady=(0, 20))
+
+        def atualizar_habilidades():
+            for widget in habilidades_frame.winfo_children():
+                widget.destroy()
+
+            habilidades = carregar_habilidades(personagem)
+            if not habilidades:
+                ctk.CTkLabel(
+                    habilidades_frame,
+                    text="Nenhuma habilidade adicionada."
+                ).pack(anchor="w", padx=10, pady=10)
+                return
+
+            for habilidade in habilidades:
+                ctk.CTkButton(
+                    habilidades_frame,
+                    text=habilidade,
+                    anchor="w",
+                    fg_color="transparent",
+                    hover_color=("#D9D9D9", "#3A3A3A"),
+                    command=lambda nome=habilidade: exibir_habilidade(nome)
+                ).pack(fill="x", padx=10, pady=6)
+
+        def exibir_habilidade(habilidade):
+            habilidade_titulo.configure(text=habilidade)
+            habilidade_descricao.configure(
+                text=DESCRICOES_HABILIDADES.get(
+                    habilidade,
+                    "Descricao desta habilidade ainda nao cadastrada."
+                )
+            )
+
+        atualizar_habilidades()
 
         info_frame = ctk.CTkFrame(tab_dados)
         info_frame.pack(fill="both", expand=True, padx=20, pady=(0, 10))
@@ -560,7 +623,7 @@ class GerenciadorGUI(ctk.CTk):
 
         self._criar_aba_pericias(tab_pericias, personagem, ficha)
 
-    def _abrir_seletor_habilidades(self, personagem):
+    def _abrir_seletor_habilidades(self, personagem, atualizar_habilidades):
         janela = ctk.CTkToplevel(self)
         janela.title(f"Adicionar Habilidade - {personagem.nome}")
         janela.geometry("620x520")
@@ -597,6 +660,26 @@ class GerenciadorGUI(ctk.CTk):
 
         detalhes_frame = ctk.CTkFrame(conteudo_frame)
         detalhes_frame.grid(row=0, column=1, sticky="nsew")
+        habilidade_selecionada = {"nome": None}
+
+        def adicionar_habilidade():
+            habilidade = habilidade_selecionada["nome"]
+            if not habilidade:
+                messagebox.showwarning("Atenção", "Selecione uma habilidade primeiro.")
+                return
+
+            habilidades = carregar_habilidades(personagem)
+            if habilidade not in habilidades:
+                habilidades.append(habilidade)
+                salvar_habilidades(personagem, habilidades)
+                atualizar_habilidades()
+            janela.destroy()
+
+        ctk.CTkButton(
+            detalhes_frame,
+            text="Adicionar habilidade",
+            command=adicionar_habilidade
+        ).pack(side="bottom", anchor="w", padx=20, pady=20)
         titulo_habilidade = ctk.CTkLabel(
             detalhes_frame,
             text="Selecione uma habilidade",
@@ -646,6 +729,7 @@ class GerenciadorGUI(ctk.CTk):
                 ).pack(fill="x", padx=6, pady=3)
 
         def exibir_detalhes(habilidade):
+            habilidade_selecionada["nome"] = habilidade
             titulo_habilidade.configure(text=habilidade)
             descricao_habilidade.configure(
                 text=DESCRICOES_HABILIDADES.get(

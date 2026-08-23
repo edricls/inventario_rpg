@@ -17,6 +17,7 @@ class Personagem(Base):
     origem = Column(String, default="")  # Origem do personagem
     historia = Column(String)  # História do personagem
     pericias = Column(String, default="[]")  # Dados das perícias do personagem em formato JSON
+    habilidades = Column(String, default="[]")  # Habilidades do personagem em formato JSON
     
     
 
