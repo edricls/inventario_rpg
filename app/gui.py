@@ -452,6 +452,9 @@ class GerenciadorGUI(ctk.CTk):
 
         tab_dados = tabview.add("Dados Gerais")
         tab_pericias = tabview.add("Perícias")
+        tab_habilidades = tabview.add("Habilidades")
+        tab_rituais = tabview.add("Rituais")
+        tab_inventario = tabview.add("Inventário")
 
         info_frame = ctk.CTkFrame(tab_dados)
         info_frame.pack(fill="both", expand=True, padx=20, pady=(0, 10))
