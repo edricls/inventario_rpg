@@ -20,6 +20,8 @@ from app.gui_data import (
     ORIGENS,
     PERICIAS,
     TRILHAS_POR_CLASSE,
+    FILTROS_HABILIDADES,
+    HABILIDADES_POR_CATEGORIA,
 )
 from app.models import Personagem
 from app.pericia_storage import (
@@ -456,6 +458,14 @@ class GerenciadorGUI(ctk.CTk):
         tab_rituais = tabview.add("Rituais")
         tab_inventario = tabview.add("Inventário")
 
+        habilidades_header = ctk.CTkFrame(tab_habilidades, fg_color="transparent")
+        habilidades_header.pack(fill="x", padx=20, pady=20)
+        ctk.CTkButton(
+            habilidades_header,
+            text="Adicionar Habilidade",
+            command=lambda: self._abrir_seletor_habilidades(personagem)
+        ).pack(side="right")
+
         info_frame = ctk.CTkFrame(tab_dados)
         info_frame.pack(fill="both", expand=True, padx=20, pady=(0, 10))
         info_frame.grid_columnconfigure(0, weight=0)
@@ -548,6 +558,78 @@ class GerenciadorGUI(ctk.CTk):
         )
 
         self._criar_aba_pericias(tab_pericias, personagem, ficha)
+
+    def _abrir_seletor_habilidades(self, personagem):
+        janela = ctk.CTkToplevel(self)
+        janela.title(f"Adicionar Habilidade - {personagem.nome}")
+        janela.geometry("620x520")
+        janela.minsize(500, 400)
+        janela.grab_set()
+
+        filtro_frame = ctk.CTkFrame(janela)
+        filtro_frame.pack(fill="x", padx=20, pady=(20, 10))
+        ctk.CTkLabel(filtro_frame, text="Categoria:").pack(side="left", padx=(10, 8), pady=12)
+
+        busca_frame = ctk.CTkFrame(janela, fg_color="transparent")
+        busca_frame.pack(fill="x", padx=20, pady=(0, 10))
+        ctk.CTkLabel(
+            busca_frame,
+            text="Buscar Habilidades:",
+            font=ctk.CTkFont(weight="bold")
+        ).pack(side="left", padx=(0, 10))
+        busca_var = StringVar()
+        busca_entrada = ctk.CTkEntry(
+            busca_frame,
+            textvariable=busca_var,
+            placeholder_text="Digite o nome da habilidade"
+        )
+        busca_entrada.pack(side="left", fill="x", expand=True)
+
+        poderes_frame = ctk.CTkScrollableFrame(janela)
+        poderes_frame.pack(fill="both", expand=True, padx=20, pady=(0, 20))
+
+        categoria_atual = "Combatente"
+
+        def atualizar_poderes(categoria=None):
+            nonlocal categoria_atual
+            if categoria is not None:
+                categoria_atual = categoria
+
+            for widget in poderes_frame.winfo_children():
+                widget.destroy()
+
+            termo_busca = busca_var.get().strip().lower()
+            poderes = [
+                poder for poder in HABILIDADES_POR_CATEGORIA.get(categoria_atual, [])
+                if termo_busca in poder.lower()
+            ]
+            if not poderes:
+                ctk.CTkLabel(
+                    poderes_frame,
+                    text="Nenhuma habilidade encontrada."
+                ).pack(anchor="w", padx=10, pady=10)
+                return
+
+            for poder in poderes:
+                ctk.CTkButton(
+                    poderes_frame,
+                    text=poder,
+                    anchor="w",
+                    fg_color="transparent",
+                    hover_color=("#D9D9D9", "#3A3A3A")
+                ).pack(fill="x", padx=6, pady=3)
+
+        filtro = ctk.CTkOptionMenu(
+            filtro_frame,
+            values=FILTROS_HABILIDADES,
+            command=atualizar_poderes,
+            dynamic_resizing=False
+        )
+        filtro.pack(side="left", fill="x", expand=True, padx=(0, 10), pady=8)
+        filtro.set("Combatente")
+        atualizar_poderes("Combatente")
+        busca_var.trace_add("write", lambda *args: atualizar_poderes())
+        busca_entrada.focus_set()
 
     def _criar_aba_edicao(self, tabview, tab_edicao, personagem, ficha_widgets):
         valor_pv_ficha = ficha_widgets["valor_pv_ficha"]

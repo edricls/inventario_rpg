@@ -105,3 +105,49 @@ ORIGENS = [
     "Universitário",
     "Vítima"
 ]
+
+FILTROS_HABILIDADES = [
+    "Combatente",
+    "Especialista",
+    "Ocultista",
+    "Sobrevivente",
+    "Mundano",
+    "Poderes Paranormais",
+    "Poderes Gerais",
+    "Origens",
+]
+
+HABILIDADES_POR_CATEGORIA = {
+    "Combatente": [
+        "Golpe Pesado",
+        "Tiro Certeiro",
+        "Reflexos Defensivos",
+    ],
+    "Especialista": [
+        "Perito",
+        "Engenhosidade",
+        "Eclético",
+    ],
+    "Ocultista": [
+        "Camuflar Ocultismo",
+        "Ritual Potente",
+        "Criar Selo",
+    ],
+    "Sobrevivente": [
+        "Empenho",
+        "Cicatrizado",
+        "Estágio 2 - Durão",
+    ],
+    "Mundano": [
+        "Empenho",
+    ],
+    "Poderes Paranormais": [
+        "Absorver Conhecimento",
+        "Afortunado",
+    ],
+    "Poderes Gerais": [
+        "Acrobático",
+        "Atlético",
+    ],
+    "Origens": ORIGENS,
+}
