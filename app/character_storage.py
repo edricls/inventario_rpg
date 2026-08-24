@@ -81,3 +81,35 @@ def salvar_habilidades(personagem, habilidades):
         db.commit()
     finally:
         db.close()
+
+
+def carregar_rituais(personagem):
+    if not personagem.rituais:
+        return []
+
+    try:
+        rituais = json.loads(personagem.rituais)
+        if not isinstance(rituais, list):
+            return []
+        return [
+            ritual if isinstance(ritual, dict) else {"nome": ritual, "simbolo": None}
+            for ritual in rituais
+            if isinstance(ritual, (dict, str))
+        ]
+    except (TypeError, ValueError):
+        return []
+
+
+def salvar_rituais(personagem, rituais):
+    db = SessionLocal()
+    try:
+        personagem_db = db.query(Personagem).filter(Personagem.id == personagem.id).first()
+        if personagem_db is None:
+            return
+
+        rituais_json = json.dumps(rituais, ensure_ascii=False)
+        personagem_db.rituais = rituais_json
+        personagem.rituais = rituais_json
+        db.commit()
+    finally:
+        db.close()

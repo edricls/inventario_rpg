@@ -10,10 +10,12 @@ from app.character_rules import (
 from app.character_storage import (
     atualizar_personagem,
     carregar_habilidades,
+    carregar_rituais,
     listar_personagens,
     remover_personagem,
     salvar_personagem as salvar_personagem_no_banco,
     salvar_habilidades,
+    salvar_rituais,
 )
 from app.gui_data import (
     ATRIBUTOS,
@@ -21,10 +23,13 @@ from app.gui_data import (
     CLASSES,
     ORIGENS,
     PERICIAS,
+    SIMBOLOS_RITUAIS,
     TRILHAS_POR_CLASSE,
     FILTROS_HABILIDADES,
     HABILIDADES_POR_CATEGORIA,
     DESCRICOES_HABILIDADES,
+    RITUAIS_POR_SIMBOLO,
+    DESCRICOES_RITUAIS,
 )
 from app.models import Personagem
 from app.pericia_storage import (
@@ -375,7 +380,8 @@ class GerenciadorGUI(ctk.CTk):
                 origem=self.entradas["origem"].get().strip(),
                 historia=self.entradas["historia"].get("1.0", "end").strip(),
                 pericias=json.dumps(dados_pericias_padrao(PERICIAS, ATRIBUTOS_PERICIAS)),
-                habilidades=json.dumps([])
+                habilidades=json.dumps([]),
+                rituais=json.dumps([])
             )
 
             salvar_personagem_no_banco(novo_p)
@@ -490,7 +496,7 @@ class GerenciadorGUI(ctk.CTk):
         habilidade_titulo.pack(anchor="nw", padx=20, pady=(20, 12))
         habilidade_descricao = ctk.CTkLabel(
             habilidade_detalhes,
-            text="A descricao da habilidade sera exibida aqui.",
+            text="A descrição da habilidade sera exibida aqui.",
             anchor="nw",
             justify="left",
             wraplength=260
@@ -529,6 +535,75 @@ class GerenciadorGUI(ctk.CTk):
             )
 
         atualizar_habilidades()
+
+        rituais_header = ctk.CTkFrame(tab_rituais, fg_color="transparent")
+        rituais_header.pack(fill="x", padx=20, pady=20)
+        ctk.CTkButton(
+            rituais_header,
+            text="Adicionar Ritual",
+            command=lambda: self._abrir_seletor_rituais(personagem, atualizar_rituais)
+        ).pack(side="left")
+
+        rituais_conteudo = ctk.CTkFrame(tab_rituais, fg_color="transparent")
+        rituais_conteudo.pack(fill="both", expand=True, padx=20, pady=(0, 20))
+        rituais_conteudo.grid_columnconfigure(0, weight=1)
+        rituais_conteudo.grid_columnconfigure(1, weight=2)
+        rituais_conteudo.grid_rowconfigure(0, weight=1)
+
+        rituais_frame = ctk.CTkScrollableFrame(rituais_conteudo)
+        rituais_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
+
+        ritual_detalhes = ctk.CTkFrame(rituais_conteudo)
+        ritual_detalhes.grid(row=0, column=1, sticky="nsew")
+        ritual_titulo = ctk.CTkLabel(
+            ritual_detalhes,
+            text="Selecione um ritual",
+            font=ctk.CTkFont(size=20, weight="bold"),
+            wraplength=260
+        )
+        ritual_titulo.pack(anchor="nw", padx=20, pady=(20, 12))
+        ritual_descricao = ctk.CTkLabel(
+            ritual_detalhes,
+            text="A descrição do ritual sera exibida aqui.",
+            anchor="nw",
+            justify="left",
+            wraplength=260
+        )
+        ritual_descricao.pack(fill="x", anchor="nw", padx=20, pady=(0, 20))
+
+        def atualizar_rituais():
+            for widget in rituais_frame.winfo_children():
+                widget.destroy()
+
+            rituais = carregar_rituais(personagem)
+            if not rituais:
+                ctk.CTkLabel(
+                    rituais_frame,
+                    text="Nenhum ritual adicionado."
+                ).pack(anchor="w", padx=10, pady=10)
+                return
+
+            for ritual in rituais:
+                nome_ritual = ritual.get("nome", "")
+                ctk.CTkButton(
+                    rituais_frame,
+                    text=nome_ritual,
+                    anchor="w",
+                    fg_color="transparent",
+                    hover_color=("#D9D9D9", "#3A3A3A"),
+                    command=lambda nome=nome_ritual: exibir_ritual(nome)
+                ).pack(fill="x", padx=10, pady=6)
+
+        def exibir_ritual(ritual):
+            ritual_titulo.configure(text=ritual)
+            ritual_descricao.configure(
+                text=DESCRICOES_RITUAIS.get(
+                    ritual,
+                    "Descricao deste ritual ainda nao cadastrada."
+                )
+            )
+
+        atualizar_rituais()
 
         info_frame = ctk.CTkFrame(tab_dados)
         info_frame.pack(fill="both", expand=True, padx=20, pady=(0, 10))
@@ -749,6 +824,124 @@ class GerenciadorGUI(ctk.CTk):
         atualizar_poderes("Combatente")
         busca_var.trace_add("write", lambda *args: atualizar_poderes())
         busca_entrada.focus_set()
+
+    def _abrir_seletor_rituais(self, personagem, atualizar_rituais):
+        janela = ctk.CTkToplevel(self)
+        janela.title(f"Adicionar Ritual - {personagem.nome}")
+        janela.geometry("620x520")
+        janela.minsize(500, 400)
+        janela.grab_set()
+
+        filtros_frame = ctk.CTkFrame(janela, fg_color="transparent")
+        filtros_frame.pack(fill="x", padx=20, pady=(20, 10))
+        ctk.CTkLabel(filtros_frame, text="Símbolos:").pack(side="left", padx=(0, 10))
+        selecionados = set()
+        ritual_selecionado = {"nome": None, "simbolo": None}
+
+        conteudo_frame = ctk.CTkFrame(janela, fg_color="transparent")
+        conteudo_frame.pack(fill="both", expand=True, padx=20, pady=(0, 10))
+        conteudo_frame.grid_columnconfigure(0, weight=1)
+        conteudo_frame.grid_columnconfigure(1, weight=2)
+        conteudo_frame.grid_rowconfigure(0, weight=1)
+        rituais_frame = ctk.CTkScrollableFrame(conteudo_frame)
+        rituais_frame.grid(row=0, column=0, sticky="nsew")
+
+        detalhes_frame = ctk.CTkFrame(conteudo_frame)
+        detalhes_frame.grid(row=0, column=1, sticky="nsew", padx=(10, 0))
+        titulo_ritual = ctk.CTkLabel(
+            detalhes_frame,
+            text="Selecione um ritual",
+            font=ctk.CTkFont(size=20, weight="bold"),
+            wraplength=240
+        )
+        titulo_ritual.pack(anchor="nw", padx=20, pady=(20, 12))
+        descricao_ritual = ctk.CTkLabel(
+            detalhes_frame,
+            text="A descricao do ritual sera exibida aqui.",
+            anchor="nw",
+            justify="left",
+            wraplength=240
+        )
+        descricao_ritual.pack(fill="x", anchor="nw", padx=20, pady=(0, 20))
+
+        def selecionar_ritual(ritual):
+            ritual_selecionado.update(ritual)
+            titulo_ritual.configure(text=ritual["nome"])
+            descricao_ritual.configure(
+                text=DESCRICOES_RITUAIS.get(
+                    ritual["nome"],
+                    "Descricao deste ritual ainda nao cadastrada."
+                )
+            )
+
+        def atualizar_lista_filtrada():
+            for widget in rituais_frame.winfo_children():
+                widget.destroy()
+
+            simbolos = selecionados or set(SIMBOLOS_RITUAIS)
+            rituais_filtrados = [
+                {"nome": nome, "simbolo": simbolo}
+                for simbolo in simbolos
+                for nome in RITUAIS_POR_SIMBOLO.get(simbolo, [])
+            ]
+            if not rituais_filtrados:
+                ctk.CTkLabel(
+                    rituais_frame,
+                    text="Nenhum ritual cadastrado para os filtros selecionados."
+                ).pack(anchor="w", padx=10, pady=10)
+                return
+
+            for ritual in rituais_filtrados:
+                ctk.CTkButton(
+                    rituais_frame,
+                    text=ritual["nome"],
+                    anchor="w",
+                    fg_color="transparent",
+                    hover_color=("#D9D9D9", "#3A3A3A"),
+                    command=lambda item=ritual: selecionar_ritual(item)
+                ).pack(fill="x", padx=10, pady=4)
+
+        def alternar_simbolo(simbolo, variavel):
+            if variavel.get():
+                selecionados.add(simbolo)
+            else:
+                selecionados.discard(simbolo)
+            atualizar_lista_filtrada()
+
+        for simbolo in SIMBOLOS_RITUAIS:
+            simbolo_var = ctk.BooleanVar(value=False)
+            ctk.CTkCheckBox(
+                filtros_frame,
+                text=simbolo,
+                variable=simbolo_var,
+                command=lambda nome=simbolo, valor=simbolo_var: alternar_simbolo(nome, valor)
+            ).pack(side="left", padx=4)
+
+        atualizar_lista_filtrada()
+
+        def adicionar_ritual():
+            ritual = ritual_selecionado["nome"]
+            if not ritual:
+                messagebox.showwarning("Atenção", "Selecione um ritual primeiro.")
+                return
+
+            rituais = carregar_rituais(personagem)
+            novo_ritual = ritual_selecionado.copy()
+            if not any(
+                item.get("nome") == ritual and item.get("simbolo") == novo_ritual["simbolo"]
+                for item in rituais
+            ):
+                rituais.append(novo_ritual)
+                salvar_rituais(personagem, rituais)
+                atualizar_rituais()
+                atualizar_lista_filtrada()
+            janela.destroy()
+
+        ctk.CTkButton(
+            detalhes_frame,
+            text="Adicionar ritual",
+            command=adicionar_ritual
+        ).pack(side="bottom", anchor="w", padx=20, pady=20)
 
     def _criar_aba_edicao(self, tabview, tab_edicao, personagem, ficha_widgets):
         valor_pv_ficha = ficha_widgets["valor_pv_ficha"]

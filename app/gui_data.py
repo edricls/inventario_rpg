@@ -170,3 +170,19 @@ DESCRICOES_HABILIDADES = {
     "Acrobático": "Você possui um talento natural para piruetas, cambalhotas e outras acrobacias complexas. Você recebe treinamento em Acrobacia ou, se já for treinado nesta perícia, recebe +2 nela. Além disso, terreno difícil não reduz seu deslocamento nem o impede de realizar investidas. Pré-requisito: Agi 2.",
     "Atlético": "Você possui um corpo atlético, resultado de uma fortuita disposição genética ou árduo treinamento. Você recebe treinamento em Atletismo ou, se já for treinado nesta perícia, recebe +2 nela. Além disso, recebe +3m em seu deslocamento. Pré-requisito: For 2.",
 }
+
+SIMBOLOS_RITUAIS = ["Sangue", "Morte", "Conhecimento", "Energia"]
+
+RITUAIS_POR_SIMBOLO = {
+    "Sangue": ["Arma Atroz"],
+    "Morte": ["Cicatrização"],
+    "Conhecimento": ["Desfazer Sinapses"],
+    "Energia": ["Coincidencia Forçada"],
+}
+
+DESCRICOES_RITUAIS = {
+    "Arma Atroz": "A arma é recoberta por veias carmesim e passa a exalar uma aura de violência. Ela fornece +2 em testes de ataque e +1 na margem de ameaça.\n\nDiscente (+2 PE): muda o bônus para +5 em testes de ataque. Requer 2º círculo.\n\nVerdadeiro (+5 PE): muda o bônus para +5 em testes de ataque e +2 na margem de ameaça e no multiplicador de crítico. Requer 3º círculo e afinidade.",
+    "Cicatrização": "Você acelera o tempo ao redor das feridas do alvo, que cicatrizam instantaneamente. O alvo recupera 3d8+3 PV, mas envelhece 1 ano automaticamente.\n\nDiscente (+2 PE): aumenta a cura para 5d8+5 PV. Requer 2º círculo.\n\nVerdadeiro (+9 PE): muda o alcance para “curto”, o alvo para “seres escolhidos” e aumenta a cura para 7d8+7 PV. Requer 4º círculo e afinidade com Morte.",
+    "Desfazer Sinapses": "Enganam-se aqueles que pensam que o Conhecimento Paranormal é incapaz de causar dano físico; inexistir é um dos processos mais terríveis que podem acontecer com alguém. A entidade do Conhecimento inexiste bilhões de neurônios de dentro do cérebro do alvo, causando a angústia inexplicável do vazio. O alvo sofre 2d6+2 pontos de dano de Conhecimento e fica frustrado por uma rodada. Se passar no teste de resistência, sofre apenas metade do dano e evita a condição. O alvo precisa ter um cérebro; o efeito se reflete como uma dor de cabeça severa que faz sangrar levemente pelos olhos, narinas, orelhas e boca.\n\nDiscente (+2 PE): muda o alcance para longo, o dano para 3d6+3 e o alvo para até 5 seres a sua escolha. Requer 2º círculo.\n\nVerdadeiro (+5 PE): muda o alcance para extremo, o dano para 8d6+8 e a condição para esmorecido. Se passar no teste de resistência, em vez de esmorecido, fica frustrado. Requer 3º círculo.",
+    "Coincidencia Forçada": "Você manipula os caminhos do caos para que o alvo tenha mais sorte. O alvo recebe +2 em testes de perícias.\n\nDiscente (+2 PE): muda o alvo para aliados à sua escolha. Requer 2º círculo.\n\nVerdadeiro (+5 PE): muda o alvo para aliados à sua escolha e o bônus para +5. Requer 3º círculo e afinidade."
+    }
