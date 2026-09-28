@@ -379,6 +379,7 @@ class GerenciadorGUI(ctk.CTk):
                 atributos=atributos_texto,
                 trilha=self.entradas["trilha"].get().strip(),
                 origem=self.entradas["origem"].get().strip(),
+                deslocamento="9m/6q",
                 historia=self.entradas["historia"].get("1.0", "end").strip(),
                 pericias=json.dumps(dados_pericias_padrao(PERICIAS, ATRIBUTOS_PERICIAS)),
                 habilidades=json.dumps([]),
@@ -638,6 +639,12 @@ class GerenciadorGUI(ctk.CTk):
         valor_pd_ficha.grid(row=0, column=1, sticky="w", padx=10, pady=8)
         valor_defesa_ficha = ctk.CTkLabel(recursos_frame_ficha, text=f"Defesa: {defesa_inicial}", font=ctk.CTkFont(size=16, weight="bold"))
         valor_defesa_ficha.grid(row=0, column=2, sticky="w", padx=10, pady=8)
+        valor_deslocamento_ficha = ctk.CTkLabel(
+            recursos_frame_ficha,
+            text=f"Deslocamento: {getattr(personagem, 'deslocamento', None) or '9m/6q'}",
+            font=ctk.CTkFont(size=12)
+        )
+        valor_deslocamento_ficha.grid(row=1, column=0, sticky="w", padx=10, pady=(0, 8))
         ctk.CTkLabel(
             recursos_frame_ficha,
             textvariable=bloqueio_var,
@@ -718,6 +725,7 @@ class GerenciadorGUI(ctk.CTk):
                 "valor_pv_ficha": valor_pv_ficha,
                 "valor_pd_ficha": valor_pd_ficha,
                 "valor_defesa_ficha": valor_defesa_ficha,
+                "valor_deslocamento_ficha": valor_deslocamento_ficha,
                 "esquiva_var": esquiva_var,
                 "bloqueio_var": bloqueio_var,
                 "resumo_ficha": resumo_ficha,
@@ -980,6 +988,7 @@ class GerenciadorGUI(ctk.CTk):
         valor_pv_ficha = ficha_widgets["valor_pv_ficha"]
         valor_pd_ficha = ficha_widgets["valor_pd_ficha"]
         valor_defesa_ficha = ficha_widgets["valor_defesa_ficha"]
+        valor_deslocamento_ficha = ficha_widgets["valor_deslocamento_ficha"]
         esquiva_var = ficha_widgets["esquiva_var"]
         bloqueio_var = ficha_widgets["bloqueio_var"]
         resumo_ficha = ficha_widgets["resumo_ficha"]
@@ -1004,6 +1013,14 @@ class GerenciadorGUI(ctk.CTk):
         valor_pd_edicao.grid(row=0, column=1, sticky="w", padx=10, pady=8)
         valor_defesa_edicao = ctk.CTkLabel(recursos_frame_edicao, text=f"Defesa: {defesa_edicao}", font=ctk.CTkFont(size=16, weight="bold"))
         valor_defesa_edicao.grid(row=0, column=2, sticky="w", padx=10, pady=8)
+        ctk.CTkLabel(
+            recursos_frame_edicao,
+            text="Deslocamento:",
+            font=ctk.CTkFont(size=12)
+        ).grid(row=1, column=0, sticky="w", padx=10, pady=(0, 8))
+        deslocamento_edicao = ctk.CTkEntry(recursos_frame_edicao, width=90)
+        deslocamento_edicao.grid(row=1, column=1, sticky="w", padx=10, pady=(0, 8))
+        deslocamento_edicao.insert(0, getattr(personagem, "deslocamento", None) or "9m/6q")
         ctk.CTkLabel(
             recursos_frame_edicao,
             textvariable=bloqueio_var,
@@ -1131,6 +1148,7 @@ class GerenciadorGUI(ctk.CTk):
                     origem_edicao.get().strip(),
                     ", ".join(atributos_valores),
                     historia_edicao.get("1.0", "end").strip(),
+                    deslocamento_edicao.get().strip() or "9m/6q",
                 )
                 if dados_atualizados is None:
                     messagebox.showerror("Erro", "Personagem não encontrado no banco de dados.")
@@ -1141,6 +1159,7 @@ class GerenciadorGUI(ctk.CTk):
                 personagem.origem = dados_atualizados["origem"]
                 personagem.atributos = dados_atualizados["atributos"]
                 personagem.historia = dados_atualizados["historia"]
+                personagem.deslocamento = dados_atualizados["deslocamento"]
                 pv_atualizado, pd_atualizado = self.calcular_pv_pd(personagem)
                 defesa_atualizada = calcular_defesa(personagem)
                 dados_pericias = self._carregar_dados_pericias(personagem)
@@ -1155,6 +1174,9 @@ class GerenciadorGUI(ctk.CTk):
                 valor_pv_ficha.configure(text=f"PV: {pv_atualizado}")
                 valor_pd_ficha.configure(text=f"PD: {pd_atualizado}")
                 valor_defesa_ficha.configure(text=f"Defesa: {defesa_atualizada}")
+                valor_deslocamento_ficha.configure(
+                    text=f"Deslocamento: {personagem.deslocamento}"
+                )
                 esquiva_var.set(f"Esquiva: {defesa_atualizada + total_reflexos}")
                 fortitude = next(
                     (item for item in dados_pericias if item.get("nome") == "Fortitude"),

@@ -39,6 +39,17 @@ def ensure_database_schema():
         with engine.begin() as connection:
             connection.execute(text("ALTER TABLE personagens ADD COLUMN rituais VARCHAR"))
 
+    if "deslocamento" not in columns:
+        with engine.begin() as connection:
+            connection.execute(
+                text("ALTER TABLE personagens ADD COLUMN deslocamento VARCHAR DEFAULT '9m/6q'")
+            )
+    else:
+        with engine.begin() as connection:
+            connection.execute(
+                text("UPDATE personagens SET deslocamento = '9m/6q' WHERE deslocamento IS NULL OR deslocamento = ''")
+            )
+
 
 def get_db():
     """Função utilitária para abrir e fechar a sessão do banco com segurança"""
