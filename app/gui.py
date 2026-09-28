@@ -2,8 +2,9 @@
 import customtkinter as ctk
 from tkinter import messagebox, StringVar
 from app.character_rules import (
-    calcular_defesa,
     calcular_pv_pd,
+    calcular_recursos,
+    carregar_valores_editados,
     obter_limites_nivel,
     obter_nome_nivel,
     validar_nex_texto,
@@ -612,38 +613,24 @@ class GerenciadorGUI(ctk.CTk):
         info_frame.grid_columnconfigure(0, weight=0)
         info_frame.grid_columnconfigure(1, weight=1)
 
-        pv_inicial, pd_inicial = self.calcular_pv_pd(personagem)
-        defesa_inicial = calcular_defesa(personagem)
         dados_pericias_iniciais = self._carregar_dados_pericias(personagem)
-
-        def total_pericia_inicial(nome_pericia):
-            dados_pericia = next(
-                (item for item in dados_pericias_iniciais if item.get("nome") == nome_pericia),
-                {},
-            )
-            try:
-                return int(dados_pericia.get("total", 0))
-            except (TypeError, ValueError):
-                return 0
-
-        esquiva_var = StringVar(
-            value=f"Esquiva: {defesa_inicial + total_pericia_inicial('Reflexos')}"
-        )
-        bloqueio_var = StringVar(value=f"Bloqueio: {total_pericia_inicial('Fortitude')}")
+        recursos_iniciais = calcular_recursos(personagem, dados_pericias_iniciais)
+        esquiva_var = StringVar(value=f"Esquiva: {recursos_iniciais['esquiva']}")
+        bloqueio_var = StringVar(value=f"Bloqueio: {recursos_iniciais['bloqueio']}")
         recursos_frame_ficha = ctk.CTkFrame(info_frame)
         recursos_frame_ficha.grid(row=0, column=0, columnspan=2, sticky="ew", padx=10, pady=(0, 8))
         recursos_frame_ficha.grid_columnconfigure((0, 1, 2, 3), weight=1)
-        valor_pv_ficha = ctk.CTkLabel(recursos_frame_ficha, text=f"PV: {pv_inicial}", font=ctk.CTkFont(size=16, weight="bold"))
+        valor_pv_ficha = ctk.CTkLabel(recursos_frame_ficha, text=f"PV: {recursos_iniciais['pv']}", font=ctk.CTkFont(size=16, weight="bold"))
         valor_pv_ficha.grid(row=0, column=0, sticky="w", padx=10, pady=8)
-        valor_pd_ficha = ctk.CTkLabel(recursos_frame_ficha, text=f"PD: {pd_inicial}", font=ctk.CTkFont(size=16, weight="bold"))
+        valor_pd_ficha = ctk.CTkLabel(recursos_frame_ficha, text=f"PD: {recursos_iniciais['pd']}", font=ctk.CTkFont(size=16, weight="bold"))
         valor_pd_ficha.grid(row=0, column=1, sticky="w", padx=10, pady=8)
         pd_turno_ficha = ctk.CTkLabel(
             recursos_frame_ficha,
-            text=f"PD/Turno: {personagem.nivel}",
+            text=f"PD/Turno: {recursos_iniciais['pd_turno']}",
             font=ctk.CTkFont(size=12)
         )
         pd_turno_ficha.grid(row=1, column=1, sticky="w", padx=10, pady=(0, 8))
-        valor_defesa_ficha = ctk.CTkLabel(recursos_frame_ficha, text=f"Defesa: {defesa_inicial}", font=ctk.CTkFont(size=16, weight="bold"))
+        valor_defesa_ficha = ctk.CTkLabel(recursos_frame_ficha, text=f"Defesa: {recursos_iniciais['defesa']}", font=ctk.CTkFont(size=16, weight="bold"))
         valor_defesa_ficha.grid(row=0, column=2, sticky="w", padx=10, pady=8)
         valor_deslocamento_ficha = ctk.CTkLabel(
             recursos_frame_ficha,
@@ -1010,41 +997,41 @@ class GerenciadorGUI(ctk.CTk):
         edicao_frame.pack(fill="both", expand=True, padx=20, pady=20)
         edicao_frame.grid_columnconfigure(1, weight=1)
 
-        pv_edicao, pd_edicao = self.calcular_pv_pd(personagem)
-        defesa_edicao = calcular_defesa(personagem)
+        dados_pericias_edicao = self._carregar_dados_pericias(personagem)
+        valores_recursos_iniciais = calcular_recursos(personagem, dados_pericias_edicao)
         recursos_frame_edicao = ctk.CTkFrame(edicao_frame)
         recursos_frame_edicao.grid(row=0, column=0, columnspan=2, sticky="ew", padx=10, pady=(0, 8))
-        recursos_frame_edicao.grid_columnconfigure((0, 1, 2, 3), weight=1)
-        valor_pv_edicao = ctk.CTkLabel(recursos_frame_edicao, text=f"PV: {pv_edicao}", font=ctk.CTkFont(size=16, weight="bold"))
-        valor_pv_edicao.grid(row=0, column=0, sticky="w", padx=10, pady=8)
-        valor_pd_edicao = ctk.CTkLabel(recursos_frame_edicao, text=f"PD: {pd_edicao}", font=ctk.CTkFont(size=16, weight="bold"))
-        valor_pd_edicao.grid(row=0, column=1, sticky="w", padx=10, pady=8)
-        pd_turno_edicao = ctk.CTkLabel(
-            recursos_frame_edicao,
-            text=f"PD/Turno: {personagem.nivel}",
-            font=ctk.CTkFont(size=12)
-        )
-        pd_turno_edicao.grid(row=1, column=1, sticky="w", padx=10, pady=(0, 8))
-        valor_defesa_edicao = ctk.CTkLabel(recursos_frame_edicao, text=f"Defesa: {defesa_edicao}", font=ctk.CTkFont(size=16, weight="bold"))
-        valor_defesa_edicao.grid(row=0, column=2, sticky="w", padx=10, pady=8)
+        recursos_frame_edicao.grid_columnconfigure((0, 1, 2), weight=1)
+        nomes_recursos = {
+            "pv": "PV",
+            "pd": "PD",
+            "pd_turno": "PD/Turno",
+            "defesa": "Defesa",
+            "esquiva": "Esquiva",
+            "bloqueio": "Bloqueio",
+        }
+        campos_recursos = {}
+        for indice, (chave, nome) in enumerate(nomes_recursos.items()):
+            linha = (indice // 3) * 2
+            coluna = indice % 3
+            ctk.CTkLabel(
+                recursos_frame_edicao,
+                text=f"{nome}:",
+                font=ctk.CTkFont(size=12)
+            ).grid(row=linha, column=coluna, sticky="w", padx=10, pady=(8, 0))
+            campo = ctk.CTkEntry(recursos_frame_edicao, width=100)
+            campo.grid(row=linha + 1, column=coluna, sticky="w", padx=10, pady=(0, 8))
+            campo.insert(0, str(valores_recursos_iniciais[chave]))
+            campos_recursos[chave] = campo
+
         ctk.CTkLabel(
             recursos_frame_edicao,
             text="Deslocamento:",
             font=ctk.CTkFont(size=12)
-        ).grid(row=1, column=0, sticky="w", padx=10, pady=(0, 8))
+        ).grid(row=4, column=0, sticky="w", padx=10, pady=(8, 0))
         deslocamento_edicao = ctk.CTkEntry(recursos_frame_edicao, width=90)
-        deslocamento_edicao.grid(row=2, column=0, sticky="w", padx=10, pady=(0, 8))
+        deslocamento_edicao.grid(row=5, column=0, sticky="w", padx=10, pady=(0, 8))
         deslocamento_edicao.insert(0, getattr(personagem, "deslocamento", None) or "9m/6q")
-        ctk.CTkLabel(
-            recursos_frame_edicao,
-            textvariable=bloqueio_var,
-            font=ctk.CTkFont(size=12)
-        ).grid(row=1, column=3, sticky="w", padx=10, pady=(0, 8))
-        ctk.CTkLabel(
-            recursos_frame_edicao,
-            textvariable=esquiva_var,
-            font=ctk.CTkFont(size=12)
-        ).grid(row=1, column=2, sticky="w", padx=10, pady=(0, 8))
 
         ctk.CTkLabel(edicao_frame, text="Classe:", anchor="w").grid(
             row=1, column=0, sticky="w", padx=10, pady=10
@@ -1154,15 +1141,38 @@ class GerenciadorGUI(ctk.CTk):
                     return
                 atributos_valores.append(f"{nome_atributo}={valor}")
 
+            valores_recursos_informados = {}
+            for chave, campo in campos_recursos.items():
+                valor = campo.get().strip()
+                if not valor.isdigit():
+                    messagebox.showerror("Erro", f"O valor de {nomes_recursos[chave]} deve ser um número inteiro não negativo.")
+                    return
+                valores_recursos_informados[chave] = int(valor)
+
             try:
+                atributos_texto = ", ".join(atributos_valores)
+                dados_pericias = self._carregar_dados_pericias(personagem)
+                ajustes_recursos = carregar_valores_editados(personagem)
+                recursos_base = calcular_recursos(
+                    personagem,
+                    dados_pericias,
+                    nivel=int(nivel_texto),
+                    atributos=atributos_texto,
+                    valores_editados={},
+                )
+                for chave, valor in valores_recursos_informados.items():
+                    if valor != valores_recursos_iniciais[chave]:
+                        ajustes_recursos[chave] = valor - recursos_base[chave]
+
                 dados_atualizados = atualizar_personagem(
                     personagem.id,
                     int(nivel_texto),
                     nex,
                     origem_edicao.get().strip(),
-                    ", ".join(atributos_valores),
+                    atributos_texto,
                     historia_edicao.get("1.0", "end").strip(),
                     deslocamento_edicao.get().strip() or "9m/6q",
+                    json.dumps(ajustes_recursos),
                 )
                 if dados_atualizados is None:
                     messagebox.showerror("Erro", "Personagem não encontrado no banco de dados.")
@@ -1174,38 +1184,25 @@ class GerenciadorGUI(ctk.CTk):
                 personagem.atributos = dados_atualizados["atributos"]
                 personagem.historia = dados_atualizados["historia"]
                 personagem.deslocamento = dados_atualizados["deslocamento"]
-                pv_atualizado, pd_atualizado = self.calcular_pv_pd(personagem)
-                defesa_atualizada = calcular_defesa(personagem)
-                dados_pericias = self._carregar_dados_pericias(personagem)
-                reflexos = next(
-                    (item for item in dados_pericias if item.get("nome") == "Reflexos"),
-                    {},
+                personagem.valores_editados = dados_atualizados["valores_editados"]
+                recursos_atualizados = calcular_recursos(
+                    personagem,
+                    dados_pericias,
+                    valores_editados=ajustes_recursos,
                 )
-                try:
-                    total_reflexos = int(reflexos.get("total", 0))
-                except (TypeError, ValueError):
-                    total_reflexos = 0
-                valor_pv_ficha.configure(text=f"PV: {pv_atualizado}")
-                valor_pd_ficha.configure(text=f"PD: {pd_atualizado}")
-                pd_turno_ficha.configure(text=f"PD/Turno: {personagem.nivel}")
-                valor_defesa_ficha.configure(text=f"Defesa: {defesa_atualizada}")
+                valor_pv_ficha.configure(text=f"PV: {recursos_atualizados['pv']}")
+                valor_pd_ficha.configure(text=f"PD: {recursos_atualizados['pd']}")
+                pd_turno_ficha.configure(text=f"PD/Turno: {recursos_atualizados['pd_turno']}")
+                valor_defesa_ficha.configure(text=f"Defesa: {recursos_atualizados['defesa']}")
                 valor_deslocamento_ficha.configure(
                     text=f"Deslocamento: {personagem.deslocamento}"
                 )
-                esquiva_var.set(f"Esquiva: {defesa_atualizada + total_reflexos}")
-                fortitude = next(
-                    (item for item in dados_pericias if item.get("nome") == "Fortitude"),
-                    {},
-                )
-                try:
-                    total_fortitude = int(fortitude.get("total", 0))
-                except (TypeError, ValueError):
-                    total_fortitude = 0
-                bloqueio_var.set(f"Bloqueio: {total_fortitude}")
-                valor_pv_edicao.configure(text=f"PV: {pv_atualizado}")
-                valor_pd_edicao.configure(text=f"PD: {pd_atualizado}")
-                pd_turno_edicao.configure(text=f"PD/Turno: {personagem.nivel}")
-                valor_defesa_edicao.configure(text=f"Defesa: {defesa_atualizada}")
+                esquiva_var.set(f"Esquiva: {recursos_atualizados['esquiva']}")
+                bloqueio_var.set(f"Bloqueio: {recursos_atualizados['bloqueio']}")
+                valores_recursos_iniciais.update(recursos_atualizados)
+                for chave, campo in campos_recursos.items():
+                    campo.delete(0, "end")
+                    campo.insert(0, str(recursos_atualizados[chave]))
                 resumo_ficha.configure(
                     text=f"Classe: {personagem.classe} | Nível: {personagem.nivel} | NEX: {personagem.nex}% | Origem: {personagem.origem or 'Não informada'}"
                 )
@@ -1321,10 +1318,9 @@ class GerenciadorGUI(ctk.CTk):
                     "total": total,
                 })
 
-            esquiva = calcular_defesa(personagem) + totais_pericias.get("Reflexos", 0)
-            esquiva_var.set(f"Esquiva: {esquiva}")
-            fortitude = totais_pericias.get("Fortitude", 0)
-            bloqueio_var.set(f"Bloqueio: {fortitude}")
+            recursos_atualizados = calcular_recursos(personagem, dados_para_salvar)
+            esquiva_var.set(f"Esquiva: {recursos_atualizados['esquiva']}")
+            bloqueio_var.set(f"Bloqueio: {recursos_atualizados['bloqueio']}")
             self._salvar_pericias_personagem(personagem, dados_para_salvar)
 
         def salvar_e_fechar():

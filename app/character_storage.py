@@ -21,7 +21,16 @@ def salvar_personagem(personagem):
         db.close()
 
 
-def atualizar_personagem(personagem_id, nivel, nex, origem, atributos, historia, deslocamento="9m/6q"):
+def atualizar_personagem(
+    personagem_id,
+    nivel,
+    nex,
+    origem,
+    atributos,
+    historia,
+    deslocamento="9m/6q",
+    valores_editados=None,
+):
     db = SessionLocal()
     try:
         personagem_db = db.query(Personagem).filter(Personagem.id == personagem_id).first()
@@ -34,6 +43,8 @@ def atualizar_personagem(personagem_id, nivel, nex, origem, atributos, historia,
         personagem_db.atributos = atributos
         personagem_db.historia = historia
         personagem_db.deslocamento = deslocamento
+        if valores_editados is not None:
+            personagem_db.valores_editados = valores_editados
         db.commit()
         return {
             "nivel": personagem_db.nivel,
@@ -42,6 +53,7 @@ def atualizar_personagem(personagem_id, nivel, nex, origem, atributos, historia,
             "atributos": personagem_db.atributos,
             "historia": personagem_db.historia,
             "deslocamento": personagem_db.deslocamento,
+            "valores_editados": personagem_db.valores_editados,
         }
     except Exception:
         db.rollback()

@@ -16,6 +16,7 @@ class Personagem(Base):
     trilha = Column(String)  # Trilha do personagem 
     origem = Column(String, default="")  # Origem do personagem
     deslocamento = Column(String, default="9m/6q")
+    valores_editados = Column(String, default="{}")
     historia = Column(String)  # História do personagem
     pericias = Column(String, default="[]")  # Dados das perícias do personagem em formato JSON
     habilidades = Column(String, default="[]")  # Habilidades do personagem em formato JSON

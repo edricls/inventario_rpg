@@ -1,3 +1,6 @@
+import json
+
+
 def obter_limites_nivel(classe):
     return 1, 4 if classe == "Sobrevivente" else 20
 
@@ -63,3 +66,48 @@ def calcular_defesa(personagem, atributos=None):
             break
 
     return 10 + agilidade
+
+
+def carregar_valores_editados(personagem):
+    try:
+        valores = json.loads(getattr(personagem, "valores_editados", None) or "{}")
+        if isinstance(valores, dict):
+            return {
+                chave: int(valor)
+                for chave, valor in valores.items()
+                if isinstance(valor, (int, float, str)) and str(valor).lstrip("-").isdigit()
+            }
+    except (TypeError, ValueError):
+        pass
+    return {}
+
+
+def calcular_recursos(personagem, pericias=None, nivel=None, atributos=None, valores_editados=None):
+    nivel_atual = nivel if nivel is not None else personagem.nivel
+    pv, pd = calcular_pv_pd(personagem, nivel_atual, atributos)
+    defesa = calcular_defesa(personagem, atributos)
+    totais_pericias = {
+        item.get("nome"): item.get("total", 0)
+        for item in (pericias or [])
+        if isinstance(item, dict)
+    }
+
+    def obter_total(nome):
+        try:
+            return int(totais_pericias.get(nome, 0))
+        except (TypeError, ValueError):
+            return 0
+
+    bases = {
+        "pv": pv,
+        "pd": pd,
+        "pd_turno": int(nivel_atual),
+        "defesa": defesa,
+        "esquiva": defesa + obter_total("Reflexos"),
+        "bloqueio": obter_total("Fortitude"),
+    }
+    ajustes = valores_editados if valores_editados is not None else carregar_valores_editados(personagem)
+    return {
+        nome: valor + int(ajustes.get(nome, 0))
+        for nome, valor in bases.items()
+    }

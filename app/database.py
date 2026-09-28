@@ -50,6 +50,12 @@ def ensure_database_schema():
                 text("UPDATE personagens SET deslocamento = '9m/6q' WHERE deslocamento IS NULL OR deslocamento = ''")
             )
 
+    if "valores_editados" not in columns:
+        with engine.begin() as connection:
+            connection.execute(
+                text("ALTER TABLE personagens ADD COLUMN valores_editados VARCHAR DEFAULT '{}'")
+            )
+
 
 def get_db():
     """Função utilitária para abrir e fechar a sessão do banco com segurança"""
