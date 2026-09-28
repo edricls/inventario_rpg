@@ -48,3 +48,18 @@ def calcular_pv_pd(personagem, nivel=None, atributos=None):
         pd = 4 + presenca + niveis_adicionais * 2
 
     return pv, pd
+
+
+def calcular_defesa(personagem, atributos=None):
+    atributos_texto = atributos if atributos is not None else personagem.atributos
+    agilidade = 0
+    for atributo in (atributos_texto or "").split(","):
+        nome, separador, valor = atributo.partition("=")
+        if separador and nome.strip() == "Agilidade":
+            try:
+                agilidade = int(valor.strip())
+            except ValueError:
+                agilidade = 0
+            break
+
+    return 10 + agilidade
