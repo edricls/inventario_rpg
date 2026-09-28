@@ -637,6 +637,12 @@ class GerenciadorGUI(ctk.CTk):
         valor_pv_ficha.grid(row=0, column=0, sticky="w", padx=10, pady=8)
         valor_pd_ficha = ctk.CTkLabel(recursos_frame_ficha, text=f"PD: {pd_inicial}", font=ctk.CTkFont(size=16, weight="bold"))
         valor_pd_ficha.grid(row=0, column=1, sticky="w", padx=10, pady=8)
+        pd_turno_ficha = ctk.CTkLabel(
+            recursos_frame_ficha,
+            text=f"PD/Turno: {personagem.nivel}",
+            font=ctk.CTkFont(size=12)
+        )
+        pd_turno_ficha.grid(row=1, column=1, sticky="w", padx=10, pady=(0, 8))
         valor_defesa_ficha = ctk.CTkLabel(recursos_frame_ficha, text=f"Defesa: {defesa_inicial}", font=ctk.CTkFont(size=16, weight="bold"))
         valor_defesa_ficha.grid(row=0, column=2, sticky="w", padx=10, pady=8)
         valor_deslocamento_ficha = ctk.CTkLabel(
@@ -724,6 +730,7 @@ class GerenciadorGUI(ctk.CTk):
             {
                 "valor_pv_ficha": valor_pv_ficha,
                 "valor_pd_ficha": valor_pd_ficha,
+                "pd_turno_ficha": pd_turno_ficha,
                 "valor_defesa_ficha": valor_defesa_ficha,
                 "valor_deslocamento_ficha": valor_deslocamento_ficha,
                 "esquiva_var": esquiva_var,
@@ -987,6 +994,7 @@ class GerenciadorGUI(ctk.CTk):
     def _criar_aba_edicao(self, tabview, tab_edicao, personagem, ficha_widgets):
         valor_pv_ficha = ficha_widgets["valor_pv_ficha"]
         valor_pd_ficha = ficha_widgets["valor_pd_ficha"]
+        pd_turno_ficha = ficha_widgets["pd_turno_ficha"]
         valor_defesa_ficha = ficha_widgets["valor_defesa_ficha"]
         valor_deslocamento_ficha = ficha_widgets["valor_deslocamento_ficha"]
         esquiva_var = ficha_widgets["esquiva_var"]
@@ -1011,6 +1019,12 @@ class GerenciadorGUI(ctk.CTk):
         valor_pv_edicao.grid(row=0, column=0, sticky="w", padx=10, pady=8)
         valor_pd_edicao = ctk.CTkLabel(recursos_frame_edicao, text=f"PD: {pd_edicao}", font=ctk.CTkFont(size=16, weight="bold"))
         valor_pd_edicao.grid(row=0, column=1, sticky="w", padx=10, pady=8)
+        pd_turno_edicao = ctk.CTkLabel(
+            recursos_frame_edicao,
+            text=f"PD/Turno: {personagem.nivel}",
+            font=ctk.CTkFont(size=12)
+        )
+        pd_turno_edicao.grid(row=1, column=1, sticky="w", padx=10, pady=(0, 8))
         valor_defesa_edicao = ctk.CTkLabel(recursos_frame_edicao, text=f"Defesa: {defesa_edicao}", font=ctk.CTkFont(size=16, weight="bold"))
         valor_defesa_edicao.grid(row=0, column=2, sticky="w", padx=10, pady=8)
         ctk.CTkLabel(
@@ -1019,7 +1033,7 @@ class GerenciadorGUI(ctk.CTk):
             font=ctk.CTkFont(size=12)
         ).grid(row=1, column=0, sticky="w", padx=10, pady=(0, 8))
         deslocamento_edicao = ctk.CTkEntry(recursos_frame_edicao, width=90)
-        deslocamento_edicao.grid(row=1, column=1, sticky="w", padx=10, pady=(0, 8))
+        deslocamento_edicao.grid(row=2, column=0, sticky="w", padx=10, pady=(0, 8))
         deslocamento_edicao.insert(0, getattr(personagem, "deslocamento", None) or "9m/6q")
         ctk.CTkLabel(
             recursos_frame_edicao,
@@ -1173,6 +1187,7 @@ class GerenciadorGUI(ctk.CTk):
                     total_reflexos = 0
                 valor_pv_ficha.configure(text=f"PV: {pv_atualizado}")
                 valor_pd_ficha.configure(text=f"PD: {pd_atualizado}")
+                pd_turno_ficha.configure(text=f"PD/Turno: {personagem.nivel}")
                 valor_defesa_ficha.configure(text=f"Defesa: {defesa_atualizada}")
                 valor_deslocamento_ficha.configure(
                     text=f"Deslocamento: {personagem.deslocamento}"
@@ -1189,6 +1204,7 @@ class GerenciadorGUI(ctk.CTk):
                 bloqueio_var.set(f"Bloqueio: {total_fortitude}")
                 valor_pv_edicao.configure(text=f"PV: {pv_atualizado}")
                 valor_pd_edicao.configure(text=f"PD: {pd_atualizado}")
+                pd_turno_edicao.configure(text=f"PD/Turno: {personagem.nivel}")
                 valor_defesa_edicao.configure(text=f"Defesa: {defesa_atualizada}")
                 resumo_ficha.configure(
                     text=f"Classe: {personagem.classe} | Nível: {personagem.nivel} | NEX: {personagem.nex}% | Origem: {personagem.origem or 'Não informada'}"
