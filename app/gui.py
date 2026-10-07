@@ -614,12 +614,43 @@ class GerenciadorGUI(ctk.CTk):
         ritual_titulo.pack(anchor="nw", padx=20, pady=(20, 12))
         ritual_descricao = ctk.CTkLabel(
             ritual_detalhes,
-            text=TEXTO_PADRAO_DESCRICAO,
+            text="",
             anchor="nw",
             justify="left",
             wraplength=260
         )
         ritual_descricao.pack(fill="x", anchor="nw", padx=20, pady=(0, 20))
+        ritual_selecionado = {"nome": None}
+        botao_remover_ritual = ctk.CTkButton(
+            ritual_detalhes,
+            text="Remover Ritual",
+            command=lambda: remover_ritual_selecionado(),
+            fg_color="#B22222",
+            hover_color="#8B0000"
+        )
+        botao_remover_ritual.pack_forget()
+
+        def limpar_selecao_ritual():
+            ritual_selecionado["nome"] = None
+            ritual_titulo.configure(text="Selecione um ritual")
+            ritual_descricao.configure(text="")
+            botao_remover_ritual.configure(state="disabled")
+            botao_remover_ritual.pack_forget()
+
+        def remover_ritual_selecionado():
+            nome_ritual = ritual_selecionado["nome"]
+            if not nome_ritual:
+                return
+
+            rituais = carregar_rituais(personagem)
+            for ritual in rituais:
+                if ritual.get("nome") == nome_ritual:
+                    rituais.remove(ritual)
+                    break
+            salvar_rituais(personagem, rituais)
+
+            limpar_selecao_ritual()
+            atualizar_rituais()
 
         def atualizar_rituais():
             for widget in rituais_frame.winfo_children():
@@ -631,6 +662,7 @@ class GerenciadorGUI(ctk.CTk):
                     rituais_frame,
                     text="Nenhum ritual adicionado."
                 ).pack(anchor="w", padx=10, pady=10)
+                limpar_selecao_ritual()
                 return
 
             for ritual in rituais:
@@ -645,6 +677,7 @@ class GerenciadorGUI(ctk.CTk):
                 ).pack(fill="x", padx=10, pady=6)
 
         def exibir_ritual(ritual):
+            ritual_selecionado["nome"] = ritual
             ritual_titulo.configure(text=ritual)
             ritual_descricao.configure(
                 text=DESCRICOES_RITUAIS.get(
@@ -652,7 +685,10 @@ class GerenciadorGUI(ctk.CTk):
                     TEXTO_PADRAO_DESCRICAO
                 )
             )
+            botao_remover_ritual.configure(state="normal")
+            botao_remover_ritual.pack(anchor="w", padx=20, pady=(0, 20))
 
+        botao_remover_ritual.configure(state="disabled")
         atualizar_rituais()
 
         info_frame = ctk.CTkFrame(tab_dados)
