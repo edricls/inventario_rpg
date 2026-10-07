@@ -32,6 +32,7 @@ from app.gui_data import (
     DESCRICOES_HABILIDADES,
     RITUAIS_POR_SIMBOLO,
     DESCRICOES_RITUAIS,
+    TEXTO_PADRAO_DESCRICAO,
 )
 from app.models import Personagem
 from app.pericia_storage import (
@@ -499,7 +500,7 @@ class GerenciadorGUI(ctk.CTk):
         habilidade_titulo.pack(anchor="nw", padx=20, pady=(20, 12))
         habilidade_descricao = ctk.CTkLabel(
             habilidade_detalhes,
-            text="A descrição da habilidade sera exibida aqui.",
+            text=TEXTO_PADRAO_DESCRICAO,
             anchor="nw",
             justify="left",
             wraplength=260
@@ -533,7 +534,7 @@ class GerenciadorGUI(ctk.CTk):
             habilidade_descricao.configure(
                 text=DESCRICOES_HABILIDADES.get(
                     habilidade,
-                    "Descricao desta habilidade ainda nao cadastrada."
+                    TEXTO_PADRAO_DESCRICAO
                 )
             )
 
@@ -567,7 +568,7 @@ class GerenciadorGUI(ctk.CTk):
         ritual_titulo.pack(anchor="nw", padx=20, pady=(20, 12))
         ritual_descricao = ctk.CTkLabel(
             ritual_detalhes,
-            text="A descrição do ritual sera exibida aqui.",
+            text=TEXTO_PADRAO_DESCRICAO,
             anchor="nw",
             justify="left",
             wraplength=260
@@ -602,7 +603,7 @@ class GerenciadorGUI(ctk.CTk):
             ritual_descricao.configure(
                 text=DESCRICOES_RITUAIS.get(
                     ritual,
-                    "Descricao deste ritual ainda nao cadastrada."
+                    TEXTO_PADRAO_DESCRICAO
                 )
             )
 
@@ -799,7 +800,7 @@ class GerenciadorGUI(ctk.CTk):
         titulo_habilidade.pack(anchor="nw", padx=20, pady=(20, 12))
         descricao_habilidade = ctk.CTkLabel(
             detalhes_frame,
-            text="A descricao da habilidade sera exibida aqui.",
+            text=TEXTO_PADRAO_DESCRICAO,
             anchor="nw",
             justify="left",
             wraplength=260
@@ -844,7 +845,7 @@ class GerenciadorGUI(ctk.CTk):
             descricao_habilidade.configure(
                 text=DESCRICOES_HABILIDADES.get(
                     habilidade,
-                    "Descricao desta habilidade ainda nao cadastrada."
+                    TEXTO_PADRAO_DESCRICAO
                 )
             )
 
@@ -892,7 +893,7 @@ class GerenciadorGUI(ctk.CTk):
         titulo_ritual.pack(anchor="nw", padx=20, pady=(20, 12))
         descricao_ritual = ctk.CTkLabel(
             detalhes_frame,
-            text="A descricao do ritual sera exibida aqui.",
+            text=TEXTO_PADRAO_DESCRICAO,
             anchor="nw",
             justify="left",
             wraplength=240
@@ -905,7 +906,7 @@ class GerenciadorGUI(ctk.CTk):
             descricao_ritual.configure(
                 text=DESCRICOES_RITUAIS.get(
                     ritual["nome"],
-                    "Descricao deste ritual ainda nao cadastrada."
+                    TEXTO_PADRAO_DESCRICAO
                 )
             )
 
