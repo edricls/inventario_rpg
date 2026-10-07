@@ -500,12 +500,35 @@ class GerenciadorGUI(ctk.CTk):
         habilidade_titulo.pack(anchor="nw", padx=20, pady=(20, 12))
         habilidade_descricao = ctk.CTkLabel(
             habilidade_detalhes,
-            text=TEXTO_PADRAO_DESCRICAO,
+            text="",
             anchor="nw",
             justify="left",
             wraplength=260
         )
         habilidade_descricao.pack(fill="x", anchor="nw", padx=20, pady=(0, 20))
+        habilidade_selecionada = {"nome": None}
+        botao_remover_habilidade = ctk.CTkButton(
+            habilidade_detalhes,
+            text="Remover Habilidade",
+            command=lambda: remover_habilidade_selecionada(),
+            fg_color="#B22222",
+            hover_color="#8B0000",
+            state="normal"
+        )
+        botao_remover_habilidade.pack_forget()
+
+        def remover_habilidade_selecionada():
+            nome_habilidade = habilidade_selecionada["nome"]
+            if not nome_habilidade:
+                return
+
+            habilidades = carregar_habilidades(personagem)
+            if nome_habilidade in habilidades:
+                habilidades.remove(nome_habilidade)
+                salvar_habilidades(personagem, habilidades)
+
+            limpar_selecao_habilidade()
+            atualizar_habilidades()
 
         def atualizar_habilidades():
             for widget in habilidades_frame.winfo_children():
@@ -530,6 +553,7 @@ class GerenciadorGUI(ctk.CTk):
                 ).pack(fill="x", padx=10, pady=6)
 
         def exibir_habilidade(habilidade):
+            habilidade_selecionada["nome"] = habilidade
             habilidade_titulo.configure(text=habilidade)
             habilidade_descricao.configure(
                 text=DESCRICOES_HABILIDADES.get(
@@ -537,6 +561,28 @@ class GerenciadorGUI(ctk.CTk):
                     TEXTO_PADRAO_DESCRICAO
                 )
             )
+            botao_remover_habilidade.configure(state="normal")
+            botao_remover_habilidade.pack(anchor="w", padx=20, pady=(0, 20))
+
+        def limpar_selecao_habilidade():
+            habilidade_selecionada["nome"] = None
+            habilidade_titulo.configure(text="Selecione uma habilidade")
+            habilidade_descricao.configure(text="")
+            botao_remover_habilidade.configure(state="disabled")
+            botao_remover_habilidade.pack_forget()
+
+        def remover_habilidade_selecionada():
+            nome_habilidade = habilidade_selecionada["nome"]
+            if not nome_habilidade:
+                return
+
+            habilidades = carregar_habilidades(personagem)
+            if nome_habilidade in habilidades:
+                habilidades.remove(nome_habilidade)
+                salvar_habilidades(personagem, habilidades)
+
+            limpar_selecao_habilidade()
+            atualizar_habilidades()
 
         atualizar_habilidades()
 
