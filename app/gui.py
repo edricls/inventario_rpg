@@ -14,7 +14,11 @@ from app.character_storage import (
     carregar_habilidades,
     carregar_rituais,
     listar_personagens,
+    obter_descricao_habilidade,
+    obter_descricao_ritual,
     remover_personagem,
+    salvar_descricao_habilidade,
+    salvar_descricao_ritual,
     salvar_personagem as salvar_personagem_no_banco,
     salvar_habilidades,
     salvar_rituais,
@@ -507,6 +511,14 @@ class GerenciadorGUI(ctk.CTk):
         )
         habilidade_descricao.pack(fill="x", anchor="nw", padx=20, pady=(0, 20))
         habilidade_selecionada = {"nome": None}
+        botao_editar_descricao_habilidade = ctk.CTkButton(
+            habilidade_detalhes,
+            text="Editar Descrição",
+            command=lambda: abrir_editor_descricao_habilidade(),
+            fg_color="#3B8ED0",
+            hover_color="#2C6EAF"
+        )
+        botao_editar_descricao_habilidade.pack_forget()
         botao_remover_habilidade = ctk.CTkButton(
             habilidade_detalhes,
             text="Remover Habilidade",
@@ -516,6 +528,33 @@ class GerenciadorGUI(ctk.CTk):
             state="normal"
         )
         botao_remover_habilidade.pack_forget()
+
+        def abrir_editor_descricao_habilidade():
+            nome_habilidade = habilidade_selecionada["nome"]
+            if not nome_habilidade:
+                return
+
+            descricao_atual = obter_descricao_habilidade(personagem, nome_habilidade)
+            if descricao_atual is None:
+                descricao_atual = DESCRICOES_HABILIDADES.get(nome_habilidade, "")
+
+            editor = ctk.CTkToplevel(self)
+            editor.title(f"Editar descrição - {nome_habilidade}")
+            editor.geometry("420x260")
+            editor.grab_set()
+
+            ctk.CTkLabel(editor, text=f"Descrição de {nome_habilidade}:", anchor="w").pack(fill="x", padx=20, pady=(20, 10))
+            campo = ctk.CTkTextbox(editor, height=140)
+            campo.pack(fill="both", expand=True, padx=20, pady=(0, 10))
+            campo.insert("1.0", descricao_atual)
+
+            def salvar_descricao():
+                texto = campo.get("1.0", "end").strip()
+                salvar_descricao_habilidade(personagem, nome_habilidade, texto)
+                habilidade_descricao.configure(text=texto or TEXTO_PADRAO_DESCRICAO)
+                editor.destroy()
+
+            ctk.CTkButton(editor, text="Salvar", command=salvar_descricao).pack(anchor="e", padx=20, pady=(0, 20))
 
         def remover_habilidade_selecionada():
             nome_habilidade = habilidade_selecionada["nome"]
@@ -540,6 +579,7 @@ class GerenciadorGUI(ctk.CTk):
                     habilidades_frame,
                     text="Nenhuma habilidade adicionada."
                 ).pack(anchor="w", padx=10, pady=10)
+                limpar_selecao_habilidade()
                 return
 
             for habilidade in habilidades:
@@ -554,36 +594,26 @@ class GerenciadorGUI(ctk.CTk):
 
         def exibir_habilidade(habilidade):
             habilidade_selecionada["nome"] = habilidade
+            descricao_personalizada = obter_descricao_habilidade(personagem, habilidade)
             habilidade_titulo.configure(text=habilidade)
             habilidade_descricao.configure(
-                text=DESCRICOES_HABILIDADES.get(
-                    habilidade,
-                    TEXTO_PADRAO_DESCRICAO
-                )
+                text=descricao_personalizada if descricao_personalizada is not None else DESCRICOES_HABILIDADES.get(habilidade, TEXTO_PADRAO_DESCRICAO)
             )
+            botao_editar_descricao_habilidade.configure(state="normal")
             botao_remover_habilidade.configure(state="normal")
+            botao_editar_descricao_habilidade.pack(anchor="w", padx=20, pady=(0, 20))
             botao_remover_habilidade.pack(anchor="w", padx=20, pady=(0, 20))
 
         def limpar_selecao_habilidade():
             habilidade_selecionada["nome"] = None
             habilidade_titulo.configure(text="Selecione uma habilidade")
             habilidade_descricao.configure(text="")
+            botao_editar_descricao_habilidade.configure(state="disabled")
+            botao_editar_descricao_habilidade.pack_forget()
             botao_remover_habilidade.configure(state="disabled")
             botao_remover_habilidade.pack_forget()
 
-        def remover_habilidade_selecionada():
-            nome_habilidade = habilidade_selecionada["nome"]
-            if not nome_habilidade:
-                return
-
-            habilidades = carregar_habilidades(personagem)
-            if nome_habilidade in habilidades:
-                habilidades.remove(nome_habilidade)
-                salvar_habilidades(personagem, habilidades)
-
-            limpar_selecao_habilidade()
-            atualizar_habilidades()
-
+        botao_editar_descricao_habilidade.configure(state="disabled")
         atualizar_habilidades()
 
         rituais_header = ctk.CTkFrame(tab_rituais, fg_color="transparent")
@@ -621,6 +651,14 @@ class GerenciadorGUI(ctk.CTk):
         )
         ritual_descricao.pack(fill="x", anchor="nw", padx=20, pady=(0, 20))
         ritual_selecionado = {"nome": None}
+        botao_editar_descricao_ritual = ctk.CTkButton(
+            ritual_detalhes,
+            text="Editar Descrição",
+            command=lambda: abrir_editor_descricao_ritual(),
+            fg_color="#3B8ED0",
+            hover_color="#2C6EAF"
+        )
+        botao_editar_descricao_ritual.pack_forget()
         botao_remover_ritual = ctk.CTkButton(
             ritual_detalhes,
             text="Remover Ritual",
@@ -630,10 +668,39 @@ class GerenciadorGUI(ctk.CTk):
         )
         botao_remover_ritual.pack_forget()
 
+        def abrir_editor_descricao_ritual():
+            nome_ritual = ritual_selecionado["nome"]
+            if not nome_ritual:
+                return
+
+            descricao_atual = obter_descricao_ritual(personagem, nome_ritual)
+            if descricao_atual is None:
+                descricao_atual = DESCRICOES_RITUAIS.get(nome_ritual, "")
+
+            editor = ctk.CTkToplevel(self)
+            editor.title(f"Editar descrição - {nome_ritual}")
+            editor.geometry("420x260")
+            editor.grab_set()
+
+            ctk.CTkLabel(editor, text=f"Descrição de {nome_ritual}:", anchor="w").pack(fill="x", padx=20, pady=(20, 10))
+            campo = ctk.CTkTextbox(editor, height=140)
+            campo.pack(fill="both", expand=True, padx=20, pady=(0, 10))
+            campo.insert("1.0", descricao_atual)
+
+            def salvar_descricao():
+                texto = campo.get("1.0", "end").strip()
+                salvar_descricao_ritual(personagem, nome_ritual, texto)
+                ritual_descricao.configure(text=texto or TEXTO_PADRAO_DESCRICAO)
+                editor.destroy()
+
+            ctk.CTkButton(editor, text="Salvar", command=salvar_descricao).pack(anchor="e", padx=20, pady=(0, 20))
+
         def limpar_selecao_ritual():
             ritual_selecionado["nome"] = None
             ritual_titulo.configure(text="Selecione um ritual")
             ritual_descricao.configure(text="")
+            botao_editar_descricao_ritual.configure(state="disabled")
+            botao_editar_descricao_ritual.pack_forget()
             botao_remover_ritual.configure(state="disabled")
             botao_remover_ritual.pack_forget()
 
@@ -678,16 +745,17 @@ class GerenciadorGUI(ctk.CTk):
 
         def exibir_ritual(ritual):
             ritual_selecionado["nome"] = ritual
+            descricao_personalizada = obter_descricao_ritual(personagem, ritual)
             ritual_titulo.configure(text=ritual)
             ritual_descricao.configure(
-                text=DESCRICOES_RITUAIS.get(
-                    ritual,
-                    TEXTO_PADRAO_DESCRICAO
-                )
+                text=descricao_personalizada if descricao_personalizada is not None else DESCRICOES_RITUAIS.get(ritual, TEXTO_PADRAO_DESCRICAO)
             )
+            botao_editar_descricao_ritual.configure(state="normal")
             botao_remover_ritual.configure(state="normal")
+            botao_editar_descricao_ritual.pack(anchor="w", padx=20, pady=(0, 20))
             botao_remover_ritual.pack(anchor="w", padx=20, pady=(0, 20))
 
+        botao_editar_descricao_ritual.configure(state="disabled")
         botao_remover_ritual.configure(state="disabled")
         atualizar_rituais()
 
